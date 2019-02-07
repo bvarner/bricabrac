@@ -1,4 +1,7 @@
 use <gopro_mounts_mooncactus.scad>;
+gopro_connector_z= 14.7;
+gopro_connector_x= 14.7;
+gopro_connector_y= 10.35;
 
 nozzle_diameter = 0.4;
 nozzle_radius = nozzle_diameter / 2;
@@ -232,10 +235,10 @@ module top_portion() {
             cap_screws(square = false);
             
             // camera cable slot
-            translate([x / 2 - 17 / 2, y - wall - 5, z - top - 2]) cube([17, 1.25, top + 4]);
+            translate([x / 2 - 17 / 2, y - wall - corner_radius, z - top - 2]) rotate([-45, 0, 0]) cube([17, 1.25, top + 4]);
             
             // Load cell cable...
-            translate([wall + board_x_padding[0] + 15, y, bottom + board_z_padding[0] + board_z + 1 + 6.5 / 2]) 
+            translate([x * (1/4), y, bottom + board_z_padding[0] + board_z + 1 + 6.5 / 2]) 
                 rotate([90, 0 , 0]) cylinder(d = 6.5, h = 10, center = true);
             
             // Ventilation holes
@@ -270,6 +273,8 @@ module top_portion() {
             rotate([270, 270, 270]) gopro_connector("triple");
     }
 }
+
+
 
 module cap_screw(square = true) {
     cylinder(d = 5.5 + nozzle_diameter, h = 3);
@@ -345,7 +350,7 @@ module cable_sheath_mold() {
             }
             sheath();
             translate([0, 0, - wall * 2]) {
-                cylinder(d = 3.5 + nozzle_diameter, h = wall * 4 + 15 + wall * 4);
+                cylinder(d = 3 + nozzle_diameter, h = wall * 4 + 15 + wall * 4);
             }
             
             // sprue
@@ -374,7 +379,7 @@ module cable_sheath_mold() {
                         sphere(d = 3.5 + nozzle_diameter, center = true);
                 sheath();
                 translate([0, 0, - wall * 2]) {
-                    cylinder(d = 3.5 + nozzle_diameter, h = wall * 4 + 15 + wall * 4);
+                    cylinder(d = 3 + nozzle_diameter, h = wall * 4 + 15 + wall * 4);
                 }
             }
         }
