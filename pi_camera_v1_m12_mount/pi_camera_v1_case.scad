@@ -19,7 +19,7 @@ z = board_z_padding[0] + board_z + board_z_padding[1] + top;
 pegs = false;
 
 $fn = 90;
-//case_front();
+case_front();
 case_back();
 
 module case_back() {
@@ -102,18 +102,18 @@ module case_front(negative = false) {
                 }
             };
             
-            // Gopro mount
+            // Gopro style mount
             difference() {
                 hull() {
                     translate([0, - y / 2 - wall - 4 - 7.5, 7.5 - wall]) 
-                        rotate([0,90, 0]) cylinder(d = 15, h = 9, center = true);
-                    translate([-4.5, -y / 2 - wall, -wall]) cube([9, wall, z - board_z_padding[1]], false);
+                        rotate([0,90, 0]) cylinder(d = 15, h = 9.5, center = true);
+                    translate([-4.5, -y / 2 - wall, -wall]) cube([9.5, wall, z - board_z_padding[1]], false);
                 };
                 
                 hull() {
                     translate([0, - y / 2 - wall - 4 - 7.5, 7.5 - wall]) 
-                        rotate([0,90, 0]) cylinder(d = 15, h = 3, center = true);
-                    translate([-1.5, -y / 2 - wall, -wall]) cube([3, wall, z - board_z_padding[1]], false);
+                        rotate([0,90, 0]) cylinder(d = 15, h = 3.35, center = true);
+                    translate([-1.5, -y / 2 - wall, -wall]) cube([3.35, wall, z - board_z_padding[1]], false);
                 };
                 
                 translate([0, - y / 2 - wall - 4 - 7.5, 7.5 - wall]) 

@@ -18,12 +18,8 @@ board_y = 65;
 board_z = 1.4;
 
 board_x_padding = [0, 5]; // 0 on the axis side, 5 after
-board_y_padding = [5, 5]; // plenty of room. 
+board_y_padding = [5, 10]; // plenty of room. 
 board_z_padding = [4, 40 - board_z]; // 
-
-gopro_connector_z= 14.7;
-gopro_connector_x= 14.7;
-gopro_connector_y= 10.35;
 
 x = board_x_padding[0] + board_x + wall * 2 + board_x_padding[1];
 y = board_y_padding[0] + board_y + wall * 2 + board_y_padding[1]; // extra padding on one end.
@@ -35,6 +31,17 @@ mount_locations = [
     [26.8 + 23, 3.5],
     [26.8 + 23, 3.5 + 58]
 ];
+
+
+
+
+top_portion();
+//bottom_portion();
+//binding_post();
+//gopro_extension();
+//cable_sheath_mold();
+
+
 
 module board(ease= corner_radius - top, cutout = true) {
     round_rect([
@@ -110,6 +117,31 @@ module round_rect(size, radius, ease = 0, ease_lower = false) {
     }
 }
 
+module gopro_extension() {
+    translate([-x * 1.25, 0, 0]) {
+        gopro_connector("double");
+        gopro_extended(len=21)
+            scale([1,-1,1])
+                    gopro_connector("triple");
+    }
+    
+
+    translate([-x * 1.25, 50, 0]) {
+        gopro_connector("double");
+        gopro_extended(len=95 / 2)
+            scale([1,-1,1]) rotate([0, 180, 0])
+                    gopro_connector("triple");
+        
+        linlen= (95/ 2 - 2*gopro_connector_y);
+        translate([gopro_connector_x / 2 - 1.5, gopro_connector_y, -gopro_connector_z / 2 ]) {
+            difference() {
+                cube([3.5, linlen , gopro_connector_z]);
+                translate([1.5, 0, (gopro_connector_z - 12) / 2]) cube([1, linlen, 12]); 
+            }
+        }
+    }
+}
+
 module bottom_portion() {
     // lower platform
     difference() {
@@ -129,6 +161,13 @@ module bottom_portion() {
         };
         difference() {
            translate([wall, wall, bottom]) board(cutout = false);
+            
+            // Reinforcement of the lower wall.
+            translate([wall, wall, bottom]) cube([wall, y, board_z_padding[0]]);
+            translate([x - 2 * wall, wall, bottom]) cube([wall, y, board_z_padding[0]]);
+            translate([wall, wall, bottom]) cube([x, wall, board_z_padding[0]]);
+            translate([wall, y - 2 * wall, bottom]) cube([x, wall, board_z_padding[0]]);
+            
 
             // Corner Support cutouts
             translate([wall, wall, bottom]) 
@@ -195,14 +234,13 @@ module top_portion() {
             // camera cable slot
             translate([x / 2 - 17 / 2, y - wall - 5, z - top - 2]) cube([17, 1.25, top + 4]);
             
-            // Load cell cable
-            translate([x / 2, y, bottom + board_z_padding[0] + board_z + 3.5 + 6.5 / 2]) rotate([90, 0 , 0]) cylinder(d = 6.5, h = 10, center = true);
+            // Load cell cable...
+            translate([wall + board_x_padding[0] + 15, y, bottom + board_z_padding[0] + board_z + 1 + 6.5 / 2]) 
+                rotate([90, 0 , 0]) cylinder(d = 6.5, h = 10, center = true);
             
             // Ventilation holes
-            step = y / 15;
-            
-            
             // Angled cuts
+            step = y / 15;
             for (zd = [1 : 4]) {
                 intersection() {
                     for(y = [0 : step : y]) {
@@ -292,7 +330,71 @@ module binding_post() {
     }
 }
 
+// Injection mold for the load cell sheath.
+module cable_sheath_mold() {
+    translate([0, y * 1.25, 0]) {
+        // Side A.
+        difference() {
+            union() {
+                translate([0, -3.5, (wall * 2 + 15 / 2)]) 
+                    cube([20, 7, wall * 4 + 15 + wall * 4], center = true);
+                translate([7, 0, 6]) sphere(d = 3.5, center = true);
+                translate([7, 0, 16]) sphere(d = 3.5, center = true);
+                translate([-7, 0, 6]) sphere(d = 3.5, center = true);
+                translate([-7, 0, 16]) sphere(d = 3.5, center = true);
+            }
+            sheath();
+            translate([0, 0, - wall * 2]) {
+                cylinder(d = 3.5 + nozzle_diameter, h = wall * 4 + 15 + wall * 4);
+            }
+            
+            // sprue
+            translate([0, -8, 1.5]) rotate([-90, 0, 0]) {
+                cylinder(d2 = 4 + nozzle_diameter, d1 = 5.5 + nozzle_diameter, h = 4);
+                translate([0, 0, 4]) cylinder(d = 4 + nozzle_diameter, h = 10);
+            }
 
-//top_portion();
-//bottom_portion();
-binding_post();
+            translate([0, -8, wall * 4.5]) rotate([-90, 0, 0]) {
+                cylinder(d = 1.5, h = 10);
+            }
+        }
+
+        translate([0, 5, 0]) {
+            // Side B.
+            difference() {
+                    translate([0, 3.5, (wall * 2 + 15 / 2)]) 
+                        cube([20, 7, wall * 4 + 15 + wall * 4], center = true);
+                    translate([7, 0, 6]) 
+                        sphere(d = 3.5 + nozzle_diameter, center = true);
+                    translate([7, 0, 16]) 
+                        sphere(d = 3.5 + nozzle_diameter, center = true);
+                    translate([-7, 0, 6]) 
+                        sphere(d = 3.5 + nozzle_diameter, center = true);
+                    translate([-7, 0, 16]) 
+                        sphere(d = 3.5 + nozzle_diameter, center = true);
+                sheath();
+                translate([0, 0, - wall * 2]) {
+                    cylinder(d = 3.5 + nozzle_diameter, h = wall * 4 + 15 + wall * 4);
+                }
+            }
+        }
+    }
+}
+
+module sheath() {
+    difference() {
+        union() {
+                cylinder(d1 = 5.5, d2 = 8, h = wall * 4);
+            translate([0, 0, wall * 4])
+                cylinder(d1 = 8, d2 = 4.25, h = 15);
+        };
+        
+        translate([0, 0, wall * 2.8]) {
+            difference() {
+                cylinder(d = 9, h = wall * 1.2);
+                cylinder(d = 6, h = wall * 1.2);
+            }
+        };
+    }
+}
+
