@@ -235,7 +235,7 @@ module top_portion() {
             cap_screws(square = false);
             
             // camera cable slot
-            translate([x / 2 - 17 / 2, y - wall - corner_radius, z - top - 2]) rotate([-45, 0, 0]) cube([17, 1.25, top + 4]);
+            translate([x / 2 - 12 / 2, y - wall - corner_radius, z - top - 2]) rotate([-45, 0, 0]) cube([12, 1.25, top + 4]);
             
             // Load cell cable...
             translate([x * (1/4), y, bottom + board_z_padding[0] + board_z + 1 + 6.5 / 2]) 
