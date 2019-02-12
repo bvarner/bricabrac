@@ -18,10 +18,11 @@ band_height = 1.2; // z-layer height of vent hole bands ( make a multiple of you
 // [ Render Options ]
 $fn = 360;
 
-outer_form = true;
+outer_form = false;
 outer_form_tie = true;
 
 inner_form = false;
+inner_form_support = true;
 retainer_clip = false;
 
 ramming_base = false;
@@ -47,13 +48,13 @@ difference() {
         }
     }
    
-    if (outer_form == true || inner_form == true) {
+    if (outer_form == true) {
         // Ventilation Holes
         for(i = [0 : 1 : (form_length / segment_height)] ) {
             translate([0, 0, i * segment_height]) 
             // z becomes a counter of which band we're on within this segment
             for(z = [1 : 1 : (segment_height - (band_height * 2)) / band_height]) {
-                layer_rot = (z % 2 == 0 ? 45 / 2  : 0);
+                layer_rot = z * 22.5;
                 rotate([0, 0, layer_rot])
                 translate([0, 0, z * band_height]) {
                     render() 
@@ -61,12 +62,31 @@ difference() {
                         rotate([0, 0, l])
                             translate([0, 0, band_height / 2])
                                 hull () {
-                                    cylinder(d = wall / 4, h = band_height, $fn = 3);
+                                    translate([0, engine_od / 3, 0]) cylinder(d = wall / 4, h = band_height, $fn = 3, center = true);
                                     translate([0, (engine_od + printer_nozzle_od + wall + wall) / 2 + 1, 0]) cube([3, 1, band_height], center = true);
                                 }
                     }
                 }
             }
+        }
+    }
+    
+    if (inner_form == true) {
+        for (z = [band_height : band_height : form_length - band_height * 2]) {
+            layer_rot = (z / band_height) * 22.5;
+            translate([0, 0, z])
+                rotate([0, 0, layer_rot])
+                    render() 
+                    for(l = [0:45:360]) {
+                        rotate([0, 0, l])
+                            translate([0, 0, band_height / 2])
+                                hull () {
+                                    translate([0, (engine_id - printer_nozzle_od) / 3, 0]) 
+                                        cylinder(d = wall / 4, h = band_height, $fn = 3, center = true);
+                                    translate([0, (engine_id - printer_nozzle_od) / 2, 0]) 
+                                        cube([1.5, 1, band_height], center = true);
+                                }
+                    };
         }
     }
 }
@@ -84,21 +104,53 @@ if (retainer_clip == true) {
 }
 
 // Inner Form Support
-if (inner_form == true) {
-    difference() {
+if (inner_form_support == true) {
+    support_od = engine_id - printer_nozzle_od - wall - wall - printer_nozzle_od;
+    // Support is made of 3 'legs', which are hulled cubes intersected 
+    // with the properly sized cylinder to round their outter wall.
+    intersection() {
         union() {
-            cylinder(d = engine_id - printer_nozzle_od - wall - wall - printer_nozzle_od, h = form_length);
-            translate([0, 0, form_length]) cylinder(d1 = engine_id - printer_nozzle_od - wall - wall - printer_nozzle_od, d2 = engine_id - 5, h = 10);
-            translate([0, - wall + (printer_nozzle_od / 2), 0]) cube([(engine_id - printer_nozzle_od) / 2, (wall * 2) - printer_nozzle_od , form_length]);
-        }
-            for(mx = [0:1]) {
-                mirror([mx, 0 , 0])
-                for (my = [0:1]) {
-                    mirror([0, my, 0])
-                        translate([wall, wall * 1.5, 0]) 
-                            cube([engine_id / 2, engine_id / 2, form_length + 10]);
+            intersection() {
+                union() {
+                    for (zr = [0:120:360]) {
+                        // Leg at 0-degrees is wider, to 
+                        rotate([0, 0, zr]) 
+                            hull() {
+                                translate([0, -wall, -5])
+                                    cube([0.1, wall * 2, form_length + 10]);
+                                
+                                translate([support_od / 2 - 0.1, - wall * ((zr == 0 ? 4 : 1) / 2), -5])
+                                    cube([0.1, wall * (zr == 0 ? 4 : 1 ), form_length + 10]);
+                            };
+                    }
                 }
-           }
+                union() {
+                    cylinder(d = support_od, h = form_length);
+                    translate([0, 0, form_length]) 
+                        cylinder(d1 = engine_id - printer_nozzle_od - wall - wall - printer_nozzle_od, d2 = engine_id - 5, h = 5);
+                    translate([0, 0, -5]) 
+                        cylinder(d2 = engine_id - printer_nozzle_od - wall - wall - printer_nozzle_od, d1 = engine_id - 5, h = 5);
+                }
+            }
+            // Spreader to fill out the outer wall.
+            hull() {
+                // Lower cube.
+                translate([0, - wall / 2 + (printer_nozzle_od / 2), -5]) 
+                    cube([engine_id / 2 - 2.75, wall - printer_nozzle_od , 0.1]);
+                
+                // Main cube filler.
+                translate([0, - wall + (printer_nozzle_od / 2), 0]) 
+                    cube([engine_id / 2, (wall * 2) - printer_nozzle_od , form_length]);
+                
+                // Upper cube
+                translate([0, - wall / 2 + (printer_nozzle_od / 2), form_length + 5]) 
+                    cube([engine_id / 2 - 2.75, wall - printer_nozzle_od , 0.1]);
+                
+            }
+            
+        }
+        translate([0, 0, -5])
+            cylinder(d = engine_id - printer_nozzle_od, h = form_length + 10);
     }
 }
 
