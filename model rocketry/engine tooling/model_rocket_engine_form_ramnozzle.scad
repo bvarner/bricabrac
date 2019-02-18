@@ -7,8 +7,20 @@ form_length = 70;
 
 outer_form_bolt_diameter = 3;
 
+// Dimensions of the profile for the casing layers.
 // Nozzle, primary charge, delay charge, upper cap
 casing_profile = [10, 40, 6, 8];
+
+nozzle_divergent_length = casing_profile[0] * (2/3);
+nozzle_divergent_diameter= 3.5; // based on measurements of an estes engine.
+nozzle_convergent_length = casing_profile[0] * (1/3);
+
+nozzle_throat_diameter = 3; // 12awg solid copper wire for the core forming.
+nozzle_pin_diameter = 2.05; // 12 awg solid copper wire stripped.
+
+// Calculate the length of the divergent parabola.
+nozzle_height = parabolaPoint(nozzle_divergent_diameter,
+                                                sqrt(nozzle_divergent_length / nozzle_divergent_diameter) / 2);
 
 // [ Printer Related Settings ]
 printer_nozzle_od = 0.4;
@@ -22,11 +34,11 @@ outer_form = false;
 outer_form_tie = true;
 
 inner_form = false;
-inner_form_support = true;
+inner_form_support = false;
 retainer_clip = false;
 
-ramming_base = false;
 ramming_rod = false;
+nozzle_forms = true;
 
 bands_per_segment = ((form_length) / band_height)  / 5;
 segment_height = band_height * bands_per_segment;
@@ -154,76 +166,93 @@ if (inner_form_support == true) {
     }
 }
 
-if (ramming_base == true) {
-    base_thickness = 7;
-    translate([0, 75, 0]) {
-        difference() {
-            $fn = 64;
-            union() {
-                difference() {
-                    cylinder(d = engine_od + 40, h = base_thickness);
-                    
-                    // Form base to inset
-                    for (rz = [0 : 10]) {
-                       rotate([0, 0, rz]) translate([0, 0, base_thickness - 2]) minkowski() {
-                             intersection() {
-                                outer_form(separate = false);
-                                cylinder(d = engine_od + printer_nozzle_od + wall + wall + 16, h = 0.1);
-                            };
-                            cylinder(d = printer_nozzle_od, h = 2.9, $fn = 12);
-                        }
-                    }
-                    translate([0, 0, base_thickness - 2]) cylinder(d = engine_od + printer_nozzle_od, h = 2);
-                }
-                
-                // Inset for nozzle pack
-                translate([0, 0, base_thickness - 2]) {
-                    cylinder(d = engine_id - printer_nozzle_od, h = casing_profile[0] - 0.5);
-                    translate([0, 0, casing_profile[0] - 0.5]) cylinder(d1 = engine_id - printer_nozzle_od, d2 = engine_id - printer_nozzle_od - 0.5, h = 0.5);
-                }
-                
-//                // Nozzle Parabola.
-//                nozzle_width = 3.5;
-//                nozzle_depth = casing_profile[0];
-//                
-//                translate([0, 0, base_thickness - 1 + nozzle_depth]) 
-//                    mirror([0, 0, 1])
-//                        parabola(nozzle_width, sqrt(nozzle_depth / nozzle_width) / 2, 15);
-                
-                // Core Bore -- Ideally, about 3mm.
-                // I have a 2.92mm (0.115") drill I use
-                translate([0, 0, base_thickness - 1]) cylinder(d = 2.92 - printer_nozzle_od, h = 10);
-            }
-            
-            cylinder(d = 3 + printer_nozzle_od, h = 10 + base_thickness);
-        }
-    }
-}
 
-
-
-
-if (ramming_rod == true) {
-    // Nozzle Parabola on the top end.
-    nozzle_width = 3.5;
-    nozzle_depth = 10;
-    
+if (nozzle_forms == true) {
+    // Nozzle Parabola on the top end for forming nozzles.
     translate([100, 0, 0]) {
         difference() {
             union() {
-                cylinder(d = engine_id - printer_nozzle_od - printer_nozzle_od,
-                             h = 15);
-                translate([0, 0, 15 + casing_profile[0]]) mirror([0, 0, 1])
-                    intersection() {
-                        parabola(3.5, sqrt(nozzle_depth / nozzle_width) / 2, 15);
-                        cylinder(d = engine_id - printer_nozzle_od - printer_nozzle_od,
-                             h = casing_profile[0]);
-                    }
-            };
-            translate([0, 0, -1]) cylinder(d = 2.92 + printer_nozzle_od, h = 15 + casing_profile[0] + 2);
-        }    
+                difference() {
+                    union() {
+                        cylinder(d1 = engine_id - printer_nozzle_od - printer_nozzle_od,
+                                     d2 = engine_od - printer_nozzle_od,
+                                     h = 15);
+                        
+                        translate([0, 0, 15 + nozzle_height]) mirror([0, 0, 1]) 
+                        {
+                            intersection() {
+                                parabola(nozzle_divergent_diameter, sqrt(nozzle_divergent_length / nozzle_divergent_diameter) / 2);
+                                translate([0, 0, nozzle_height - casing_profile[0]])
+                                cylinder(d = engine_id - printer_nozzle_od - printer_nozzle_od,
+                                     h = casing_profile[0]);
+                            }
+                        }
+                    };
+                    // Remove the throat, so we can provide a flat top.
+                    translate([0, 0, 15]) 
+                        cylinder(d = nozzle_throat_diameter + printer_nozzle_od,
+                                     h = casing_profile[0]);
+                }
+                
+                // Add back in the throat with a nice flat top.
+                translate([0, 0, 15]) 
+                        cylinder(d = nozzle_throat_diameter + printer_nozzle_od, 
+                                                             h = casing_profile[0] - nozzle_convergent_length);
+            }
+            // Center bore for the alignment pin.
+            cylinder(d = nozzle_pin_diameter + printer_nozzle_od,
+                         h = 15 + casing_profile[0]);
+        }
     }
     
+    
+    // Rod for forming the convergent side.
+    translate([100, 25, 0]) {
+        difference() {
+            union() {
+                // 3 legged support -- No Infil
+                // Very much like the insertable type for the inner forms.
+                intersection() {
+                    union() {
+                        for (zr = [0:120:360]) {
+                            rotate([0, 0, zr]) 
+                                hull() {
+                                    translate([0, -(wall * 2) / 2, -5])
+                                        cube([0.1, wall * 2, form_length + 10]);
+                                    translate([(engine_id - printer_nozzle_od - printer_nozzle_od) / 2 - 0.1, 
+                                                     - wall * (1 / 2), 
+                                                     -5])
+                                        cube([0.1, wall, form_length + 10]);
+                                };
+                        }
+                    };
+                    cylinder(d = engine_id - printer_nozzle_od - printer_nozzle_od,
+                                 h = form_length - casing_profile[0]);
+                }
+                
+                // Support for convergent seal.
+                translate([0, 0, form_length - casing_profile[0] - 10])
+                    cylinder(d1 = 1,
+                                 d2 = engine_id - printer_nozzle_od - printer_nozzle_od,
+                                 h = 10);
+                
+                // Convergent side
+                translate([0, 0, form_length - casing_profile[0]])
+                    cylinder(d1 = engine_id - printer_nozzle_od - printer_nozzle_od,
+                                 d2 = nozzle_throat_diameter + printer_nozzle_od,
+                                 h = nozzle_convergent_length);
+            }
+
+            // Center Bore for alignment pin
+            translate([0, 0, form_length - casing_profile[0] - 5]) 
+                cylinder(d = nozzle_pin_diameter + printer_nozzle_od,
+                             h = casing_profile[0] + 5);
+        }        
+    }
+}
+    
+if (ramming_rod == true) {
+    // General Ram-Rod for packing.
     translate([75, 0, 0]) {
         difference() {
             cylinder(d = engine_id - printer_nozzle_od - printer_nozzle_od,
@@ -296,7 +325,7 @@ if (ramming_rod == true) {
     }
 }
 
-module outer_form(separate = true) {
+module outer_form(separate = true, hull = false) {
     for (z = [0 : 120 : 240]) {
         spreadxy = separate == true && z == 240 ? 1 : 0;
         rotate([0, 0, z]) translate([spreadxy, spreadxy, 0])
@@ -309,22 +338,23 @@ module outer_form(separate = true) {
                 translate([-wall * 2, 0 , 0]) cube([wall * 4, (engine_od + printer_nozzle_od + wall + wall) / 2 + 8, form_length]);
                 rotate([0, 0, -120]) translate([-wall * 2, 0 , 0]) cube([wall * 4, (engine_od + printer_nozzle_od + wall + wall) / 2 + 8, form_length]);
             }
-            
-            // Outer casing ID.
-            cylinder(d = engine_od + printer_nozzle_od, h = form_length);
-            
-            // Cut outer casing to 1/3'rd portion.
-            rotate([0, 0, - 120]) translate([0, -(engine_od + printer_nozzle_od + wall + wall) / 2 , 0]) 
-                cube([(engine_od + printer_nozzle_od + wall + wall) / 2, engine_od + printer_nozzle_od + wall + wall + 8 - (spreadxy == 0 && outer_form_tie == true ? 0.2 : 0), form_length]);
+            if (!hull) {
+                // Outer casing ID.
+                cylinder(d = engine_od + printer_nozzle_od, h = form_length);
                 
-            rotate([0, 0, - 180]) translate([0, -(engine_od + printer_nozzle_od + wall + wall) / 2 - 8 + (spreadxy == 0 && outer_form_tie == true ? 0.2 : 0), 0]) 
-                cube([(engine_od + printer_nozzle_od + wall + wall) / 2, engine_od + printer_nozzle_od + wall + wall, form_length]);
-            
-            // Snap Holes on outer Form.
-            for(i = [0 : segment_height : form_length] ) {
-                for(z = [0:240:240]) {
-                    rotate([0, 0, z])
-                    translate([0, (engine_od + printer_nozzle_od + wall + wall) / 2 + 4, i + segment_height / 2]) rotate([0,90,0]) cylinder(d = outer_form_bolt_diameter + printer_nozzle_od, h = 10, center = true);
+                // Cut outer casing to 1/3'rd portion.
+                rotate([0, 0, - 120]) translate([0, -(engine_od + printer_nozzle_od + wall + wall) / 2 , 0]) 
+                    cube([(engine_od + printer_nozzle_od + wall + wall) / 2, engine_od + printer_nozzle_od + wall + wall + 8 - (spreadxy == 0 && outer_form_tie == true ? 0.2 : 0), form_length]);
+                    
+                rotate([0, 0, - 180]) translate([0, -(engine_od + printer_nozzle_od + wall + wall) / 2 - 8 + (spreadxy == 0 && outer_form_tie == true ? 0.2 : 0), 0]) 
+                    cube([(engine_od + printer_nozzle_od + wall + wall) / 2, engine_od + printer_nozzle_od + wall + wall, form_length]);
+                
+                // Snap Holes on outer Form.
+                for(i = [0 : segment_height : form_length] ) {
+                    for(z = [0:240:240]) {
+                        rotate([0, 0, z])
+                        translate([0, (engine_od + printer_nozzle_od + wall + wall) / 2 + 4, i + segment_height / 2]) rotate([0,90,0]) cylinder(d = outer_form_bolt_diameter + printer_nozzle_od, h = 10, center = true);
+                    }
                 }
             }
         }
@@ -341,7 +371,7 @@ function parabolaPoint(x, k) = k * x * x;
 function focal_length(k) = parabolaPoint(0.5 / k, k);
 
 //Cup shape
-module outer_parabola(width, k, segments, base_thickness = 1) {
+module outer_parabola(width, k, segments = $fn / 10, base_thickness = 1) {
     for(i = [-segments:1:segments - 1]) {
         x1 = i * width / segments;
         x2 = (i + 1) * width / segments;
@@ -352,7 +382,7 @@ module outer_parabola(width, k, segments, base_thickness = 1) {
 }
 
 //Bulge shape
-module inner_parabola(width, k, segments) {
+module inner_parabola(width, k, segments = $fn / 10) {
     max_y = parabolaPoint(width, k);
     for(i = [-segments:1:segments - 1]) {
         x1 = i * width / segments;
@@ -363,7 +393,7 @@ module inner_parabola(width, k, segments) {
     }
 }
 
-module parabola(width, k, segments) {
+module parabola(width, k, segments = $fn / 10) {
     rotate_extrude($fn = segments * 4)
     intersection() {
         inner_parabola(width, k, segments);
