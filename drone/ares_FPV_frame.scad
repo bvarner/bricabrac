@@ -13,7 +13,7 @@
 //    landing bumpers. They fit in the bottom of the nacells. :-)
 //    
 // The original frame (minus screws, props, guards) weighed in at ~13grams.
-// Printing in PETG, PrusaSlicer says it'll be 11.68g. :-D
+// Printing in PETG, PrusaSlicer says it'll be 11.88g. :-D
 // 
 $fn = 180;
 nozzle_diameter = 0.4;
@@ -22,7 +22,7 @@ twall = 0.87; // two lines
 fwall = 1.7; // four lines
 
 motor_od = 8.5 + nozzle_diameter;
-motor_tight = motor_od - nozzle_diameter - 0.1;
+motor_tight = motor_od - 0.25;
 
 screw_d = 1.5; // clearance diameter of screws.
 screw_hole_d = 0.75 + nozzle_diameter; // for differencing a hole for a screw.
@@ -66,7 +66,7 @@ difference() {
         // fpv antenna mount
         hull() {
             translate([25 - 1, -4, 0]) cube([1, 8, frame_height]);
-            translate([25 + 3.5, 0, 3.5]) rotate([90, 0, 0]) cylinder(d = 7, h = 8, center = true);
+            translate([25 + 3.5, 0, 3.5]) rotate([90, 0, 0]) cylinder(d = 8, h = 8, center = true);
         }
         // main board mounts
         // 1.5mm standoffs & screw receivers
@@ -199,10 +199,27 @@ difference() {
 
 module arm() {
     translate([5 + (3 + 3 * twall) / 2, 35 / 2, 0]) union() {
+        // Wire guide
+        translate([0, 0, frame_height]) {
+            difference() {
+                translate([-fwall, -fwall / 2, 0]) cube([fwall * 2, fwall, 3]);
+                translate([0, 0, layer_height(1 + layer)]) rotate([90, 0, 0]) translate([0, 0, -fwall / 2]) resize([1.25, 2]) cylinder(d = 2, h = fwall);
+                translate([-0.25 / 2, -fwall / 2, 2]) cube([0.25, fwall, 2]);
+            }
+        }
+        
         hull() {
             translate([(3 + 3 * twall) * -0.5, -35 / 2, 0])
                 cube([(3 + 3 * twall), (3 + 3 * twall), frame_height]);
             translate([0, 21.5, 0]) cylinder(d = 3 + 3 * twall, h = frame_height);
+        }
+        // Wire guide
+        translate([0, 21.5, frame_height]) rotate([0, 0, -45]) {
+            difference() {
+                translate([-fwall, -fwall / 2, 0]) cube([fwall * 2, fwall, 3]);
+                translate([0, 0, layer_height(1 + layer)]) rotate([90, 0, 0]) translate([0, 0, -fwall / 2]) resize([1.25, 2]) cylinder(d = 2, h = fwall);
+                translate([-0.25 / 2, -fwall / 2, 2]) cube([0.25, fwall, 2]);
+            }
         }
         translate([0, 21.5, 0])  {
             union() {
@@ -309,7 +326,7 @@ module nacell(height = layer_height(24.5)) {
         
         // LED
         color("red") {
-            translate([-13, 0, 0]) cylinder(d = 3 + nozzle_diameter, h= height);
+            translate([-13, 0, 0]) cylinder(d = 2.9 + nozzle_diameter, h= height);
         }
     }
 }
