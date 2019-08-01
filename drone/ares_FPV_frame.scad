@@ -33,11 +33,7 @@ function layers(laf) = laf * layer;
 
 frame_height = layer_height(3);
 
-battery_box = [35, 30, 8.5]; // standard box with ares recon FPV 600mAh battery.
-//battery_box = [40, 25, 9.0]; // Battery box for 
-
 fpv_board = [40, 17, 5];  // with shielding.
-
 //fpv cam is 7.9 square, 7.9mm lens opening 2.3mm to 4.5 high.
 
 
@@ -66,8 +62,9 @@ difference() {
         // fpv antenna mount
         hull() {
             translate([25 - 1, -4, 0]) cube([1, 8, frame_height]);
-            translate([25 + 3.5, 0, 3.5]) rotate([90, 0, 0]) cylinder(d = 8, h = 8, center = true);
+            translate([25 + 3.5, 0, 4]) rotate([90, 0, 0]) cylinder(d = 8, h = 8, center = true);
         }
+
         // main board mounts
         // 1.5mm standoffs & screw receivers
         // 18.25 oc x axis
@@ -113,6 +110,27 @@ difference() {
                             }
         }
         
+        // FPV Board Clip
+        translate([-fpv_board[0] / 2 - 0.88 - twall, -fpv_board[1] / 2 - 2.88 - twall, -layers(1)]) {
+            remaining_height = fpv_board[2] - (frame_height - layers(3)) + layers(3);
+            mirror([0, 0, 1]) {
+                difference() {
+                    cube([fpv_board[0] + 2 * (twall + 0.88), 
+                             fpv_board[1] + 2 * (twall + 2.88),
+                             remaining_height]);
+                    // Move to the edge of the board...
+                    translate([0.88 + twall, 2.88 + twall, 0]) {
+                        translate([-3, 1.25, 0]) cube([fpv_board[0] + 6, fpv_board[1] - 2.5, remaining_height - layers(3)]);
+                        translate([2, -4, 0]) cube([fpv_board[0] - 4, fpv_board[1] + 8, remaining_height - layers(3)]);
+                        translate([fpv_board[0] / 4, fpv_board[1] / 2, 0]) cylinder(d = fpv_board[1], $fn = 6, h = fpv_board[2]);
+                        translate([fpv_board[0] * 3/4, fpv_board[1] / 2, 0]) cylinder(d = fpv_board[1], $fn = 6, h = fpv_board[2]);
+                        // cut for micro SD card insert...
+                        translate([8, -4, 0]) cube([15, 4, fpv_board[2]]);
+                    }
+                }
+            }
+        }
+        
         // arms
         mirror([0, 0, 0]) arm();
         mirror([1, 0, 0]) arm();
@@ -146,7 +164,7 @@ difference() {
         mirror([0, my, 0])
         for (mx = [0 : 1]) {
             mirror([mx, 0, 0])
-                translate([-25, - 0.5 * (36 + twall), -0.5]) rotate([0, 0, -15])
+                translate([-25, - 0.5 * (36 + twall), -10]) rotate([0, 0, -25])
                     cylinder($fn = 3, d = 29, h =15);
         }
     }
@@ -157,14 +175,10 @@ difference() {
         mirror([0, my, 0])
         for (mx = [0 : 1]) {
             mirror([mx, 0, 0])
-                translate([-fpv_board[0] / 2 + 3 + 2.5 + twall, (-(36 + twall) / 2 )+ twall + 2.5, frame_height - layer_height(2.5) - layers(4)]) {
-                    translate([0, 0, -0.5]) cylinder(d = 2.33 + nozzle_diameter, h = 3);
-                    intersection() {
-                        translate([0, 0, -0.5]) cylinder(d = 2.33 + nozzle_diameter, h = 3 + layer);
-                        translate([0, 0, 2.5 + layer]) cube([2.33 + nozzle_diameter, 0.8 + nozzle_diameter, layers(2)] , center = true);
-                    }
-                    translate([0, 0, 2.5]) cylinder(d = 0.8 + nozzle_diameter, h= 7);
-                }
+                translate([-fpv_board[0] / 2 + 3 + 2.5 + twall, 
+                                (-(36 + twall) / 2 )+ twall + 2.5,
+                                frame_height - layer_height(2.5) - layers(4)]) 
+                    screw_opening();
         }
     }
     
@@ -173,13 +187,14 @@ difference() {
         // board, recessed 2.25mm + 1.25 for shielding, and padding.
          translate([0, 0, -fpv_board[2] / 2 + frame_height - layers(3)])
             cube(fpv_board, center = true);
-        // zip tie cuts
+        
+        // FPV bracket_screws
         for (my = [0 : 1]) {
             mirror([0, my, 0])
             for (mx = [0 : 1]) {
                 mirror([mx, 0, 0])
-                    translate([-fpv_board[0] / 2 + 3, -fpv_board[1] / 2 - 2 - twall, -5])
-                        cube([4, 2, 7]);
+                    translate([-fpv_board[0] / 2 + twall, -fpv_board[1] / 2 - 1.44 - wall, frame_height + layers(4)])
+                        mirror([0, 0, 1]) screw_opening();
             }
         }
         // do these twice, to balance weight
@@ -198,29 +213,17 @@ difference() {
 }
 
 module arm() {
-    translate([5 + (3 + 3 * twall) / 2, 35 / 2, 0]) union() {
-        // Wire guide
-        translate([0, 0, frame_height]) {
-            difference() {
-                translate([-fwall, -fwall / 2, 0]) cube([fwall * 2, fwall, 3]);
-                translate([0, 0, layer_height(1 + layer)]) rotate([90, 0, 0]) translate([0, 0, -fwall / 2]) resize([1.25, 2]) cylinder(d = 2, h = fwall);
-                translate([-0.25 / 2, -fwall / 2, 2]) cube([0.25, fwall, 2]);
-            }
-        }
-        
+    translate([6.25 + (3 + 3 * twall) / 2, 35 / 2, 0]) union() {
+        // Arm from body.
+        translate([0, 0, frame_height]) wire_guide();
         hull() {
             translate([(3 + 3 * twall) * -0.5, -35 / 2, 0])
                 cube([(3 + 3 * twall), (3 + 3 * twall), frame_height]);
             translate([0, 21.5, 0]) cylinder(d = 3 + 3 * twall, h = frame_height);
         }
-        // Wire guide
-        translate([0, 21.5, frame_height]) rotate([0, 0, -45]) {
-            difference() {
-                translate([-fwall, -fwall / 2, 0]) cube([fwall * 2, fwall, 3]);
-                translate([0, 0, layer_height(1 + layer)]) rotate([90, 0, 0]) translate([0, 0, -fwall / 2]) resize([1.25, 2]) cylinder(d = 2, h = fwall);
-                translate([-0.25 / 2, -fwall / 2, 2]) cube([0.25, fwall, 2]);
-            }
-        }
+
+        // Arm to nacell
+        translate([0, 21.5, frame_height]) rotate([0, 0, -45]) wire_guide();
         translate([0, 21.5, 0])  {
             union() {
                 hull() {
@@ -231,6 +234,37 @@ module arm() {
                 translate([17, 0, 0]) mirror([0, 1, 0]) nacell();
             }
         }
+    }
+}
+
+module wire_guide() {
+    difference() {
+        hull() {
+            translate([0, 0, -layers(1)]) cylinder(d = 3 + 3 * twall, h = layers(1), $fn = 6);
+            translate([0, 0, layer_height(3)]) resize([0, 0, fwall / 2]) sphere(d = fwall, $fn = 6);
+        }
+        translate([0, 0, layer_height(1 + layer)]) 
+            rotate([90, 0, 0]) 
+                translate([0, 0, -(3 + 3 * twall) / 2]) 
+                    resize([1.75, 2]) 
+                        cylinder(d = 2, h = 3 + 3 * twall);
+        translate([-0.65 / 2, -(3 + 3 * twall) / 2, 2]) cube([0.65, 3 + 3 * twall, 2]);
+        translate([0, 0, layer_height(3.75)]) 
+            rotate([90, 0, 0]) 
+                translate([0, 0, -(3 + 3 * twall) / 2])  resize([1.75, 1.75, 0]) rotate([0, 0, 30])
+                    cylinder(d = 1, h = 3 + 3 * twall, $fn= 6);
+    }
+}
+
+module screw_opening() {
+    $fn = 64;
+    union() {
+        translate([0, 0, -0.5]) cylinder(d = 2.33 + nozzle_diameter, h = 3);
+        intersection() {
+            translate([0, 0, -0.5]) cylinder(d = 2.33 + nozzle_diameter, h = 3 + layer);
+            translate([0, 0, 2.5 + layer]) cube([2.33 + nozzle_diameter, 0.8 + nozzle_diameter, layers(2)] , center = true);
+        }
+        translate([0, 0, 2.5]) cylinder(d = 0.8 + nozzle_diameter, h= 7);
     }
 }
 
@@ -315,9 +349,9 @@ module nacell(height = layer_height(24.5)) {
             }
             
             // Friction fit slot.
-            rotate([0, 0, 180]) translate([0, -1, height - layer_height(1.5) - 20 - 7]) {
-                cube([nacell_od - 1, 2, 7 + 15]);
-                translate([nacell_od - 1, 1, 0]) cylinder(d = 2, h = 7 + 15);
+            rotate([0, 0, 180]) translate([0, -1, height - layer_height(1.5) - 20 - 1.5]) {
+                cube([nacell_od - 1, 2, 7 + 9.5]);
+                translate([nacell_od - 1, 1, 0]) cylinder(d = 2, h = 7 + 9.5);
             }
             
             // horizontal cut for landing bumper.
