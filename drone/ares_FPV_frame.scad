@@ -166,7 +166,7 @@ difference() {
         translate([(-(battery[0] + 5 + nozzle_diameter + fwall) / 2 - 2.5) / 2, 
                         ((-36 - twall) / 2) / 2,
                         layer_height(9)])
-            cylinder(d = 12, h = 2, $fn = 6);
+            cylinder(d = 12, h = layers(5) + battery[2] + 1, $fn = 6);
     }
     translate([0, 0, layer_height(9)]) cylinder(d = 12, h = 2, $fn = 6);
     
