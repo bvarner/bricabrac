@@ -39,9 +39,9 @@ fpv_board = [40, 17, 5];  // with shielding.
 // and typical 5mm in the x-axis for lipo connecitons internal to the pack.
 
 // Ares FPV Stock is a 500mAh 853030.
-//battery = [30, 30, 8.5];
+battery = [30, 30, 8.5];
 // I have replacement 700mAh 802540's.
-battery = [40, 25, 8.0];
+//battery = [40, 25, 8.0];
 collision_check = false;
 
 // arms are 17mm, then 21.5 to the body.
