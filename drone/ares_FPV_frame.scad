@@ -95,14 +95,15 @@ difference() {
             }
         }
         
+        
         // Battery bay.
         difference() {
             hull() {
                 translate([-(battery[0] + 5 + nozzle_diameter + fwall) / 2 - 2.5,  (-36 - twall) / 2, layer_height(9) + layers(1)])
-                    cube([battery[0] + 5 + nozzle_diameter + fwall + 5, 36 + twall, layers(4)]);
+                    cube([battery[0] + 5 + nozzle_diameter + fwall + 5, 36 + twall, layers(3)]);
                 translate([-(battery[0] + 5 + nozzle_diameter + wall * 2) / 2,  
                                 -(battery[1] + nozzle_diameter + wall * 2) / 2, 
-                                layer_height(9) + layers(5) + (2 / 3) * battery[2] - 0.5])
+                                layer_height(9) + layers(4) + (2 / 3) * battery[2] - 0.5])
                     cube([battery[0] + 5 + nozzle_diameter + wall * 2, battery[1] + nozzle_diameter + wall * 2, layers(1)]);
             }
             // Battery Space.
@@ -110,23 +111,31 @@ difference() {
             color("pink")
                 translate([(battery[0] + 5 + nozzle_diameter) * -0.5, 
                     (battery[1] + nozzle_diameter) * -0.5, 
-                    layer_height(9) + layers(1) + layers(4)]) 
+                    layer_height(9) + layers(1) + layers(3)]) 
                     cube([battery[0] + 5 + nozzle_diameter, battery[1] + nozzle_diameter, battery[2]]);
             // Rubber band hooks
             for (my = [0, 1]) mirror([0, my, 0]) {
                 for (mx = [0, 1]) mirror([mx, 0, 0]) {
-                    translate([-(battery[0] + 5 + nozzle_diameter + fwall) / 2 - 1.25,  -3, layer_height(9)])
+                    translate([-(battery[0] + 5 + nozzle_diameter + fwall) / 2 - 2.5 + 1.25,  -3, layer_height(9)])
                         rotate([0, 0, 30])
                             cylinder(d = 3, $fn = 6, h = (2 / 3) * battery[2]);
+                    translate([-(battery[0] + 5 + nozzle_diameter + fwall) / 2 - 2.5 + fwall,  -3, layer_height(9)])
+                        rotate([-90, 0, 0])
+                            rotate([0, 0, 30])
+                            cylinder(d = 2, $fn = 6, h = (2 / 3) * battery[2]);
                     translate([-3,  (-36 - twall) / 2 + 1.25, layer_height(9)])
-                            cylinder(d = 3, $fn = 6, h = (2 / 3) * battery[2]);
+                        cylinder(d = 3, $fn = 6, h = (2 / 3) * battery[2]);
+                    translate([-3,  (-36 - twall) / 2 + fwall, layer_height(9)])
+                        rotate([0, 90, 0])
+                            cylinder(d = 2, $fn = 6, h = (2 / 3) * battery[2]);
                     // cut to middle.
-                    translate([-(battery[0] + 5 + nozzle_diameter + fwall) / 2 - 2.5,  7.5, layer_height(9) + layers(5)])
+                    translate([-(battery[0] + 5 + nozzle_diameter + fwall) / 2 - 2.5,  7.5, layer_height(9) + layers(4)])
                     rotate([0, 0, 30])
                         cube([(battery[0] + 5 + nozzle_diameter + fwall) / 2, 10, battery[2] + 1]);
                 }
             }
         }
+        
         
         // FPV Board Clip
         translate([-fpv_board[0] / 2 - 0.88 - twall, -fpv_board[1] / 2 - 2.88 - twall, -layers(1)]) {
@@ -257,7 +266,7 @@ module wire_guide() {
             rotate([90, 0, 0]) 
                 translate([0, 0, -(3 + 3 * twall) / 2]) 
                     cylinder(d = 2, h = 3 + 3 * twall);
-        translate([-(0.5 + nozzle_diameter) / 2, -(3 + 3 * twall) / 2, 1.5]) cube([0.5 + nozzle_diameter, 3 + 3 * twall, 2]);
+        translate([-(0.4 + nozzle_diameter) / 2, -(3 + 3 * twall) / 2, 1.5]) cube([0.4 + nozzle_diameter, 3 + 3 * twall, 2]);
         translate([0, 0, layer_height(3.55)]) 
             rotate([90, 0, 0]) 
                 translate([0, 0, -(3 + 3 * twall) / 2])  resize([1.75, 3, 0]) rotate([0, 0, 30])
