@@ -2,7 +2,9 @@
 // [ Engine Form Dimensions ]
 engine_od = 17.5;
 engine_wall = 2.25;
-engine_id = engine_od - engine_wall;
+// Original, which made 1.125 walls.
+//engine_id = engine_od - engine_wall;
+engine_id = engine_od - (engine_wall * 2);
 form_length = 70;
 
 outer_form_bolt_diameter = 3;
@@ -18,6 +20,8 @@ nozzle_convergent_length = casing_profile[0] * (1/3);
 nozzle_throat_diameter = 3; // 12awg solid copper wire for the core forming.
 nozzle_pin_diameter = 2.05; // 12 awg solid copper wire stripped.
 
+ramming_inner_diameter = nozzle_throat_diameter + 1;
+
 // Calculate the length of the divergent parabola.
 nozzle_height = parabolaPoint(nozzle_divergent_diameter,
                                                 sqrt(nozzle_divergent_length / nozzle_divergent_diameter) / 2);
@@ -30,16 +34,17 @@ band_height = 1.2; // z-layer height of vent hole bands ( make a multiple of you
 // [ Render Options ]
 $fn = 360;
 
-outer_form = true;
+outer_form = false;
 outer_form_tie = true;
-
-inner_form = true;
-inner_form_support = true;
 retainer_clip = false; 
 
+inner_form = true;
+inner_form_key = true;
+
 ramming_rod = true;
-ramming_base = true;
+ramming_base = false;
 nozzle_forms = true;
+igniter_mould = false;
 
 
 bands_per_segment = ((form_length) / band_height)  / 5;
@@ -118,7 +123,7 @@ if (retainer_clip == true) {
 }
 
 // Inner Form Support
-if (inner_form_support == true) {
+if (inner_form_key == true) {
     support_od = engine_id - printer_nozzle_od - wall - wall - printer_nozzle_od;
     // Support is made of 3 'legs', which are hulled cubes intersected 
     // with the properly sized cylinder to round their outter wall.
@@ -165,6 +170,124 @@ if (inner_form_support == true) {
         }
         translate([0, 0, -5])
             cylinder(d = engine_id - printer_nozzle_od, h = form_length + 10);
+    }
+}
+
+
+if (igniter_mould == true) {
+    segments = 6;
+    segment_size = wall * 3 + nozzle_divergent_diameter + wall * 3;
+    mould_bottom = 0;
+    mould_height = casing_profile[0] + casing_profile[1] + wall * 2;
+    
+    translate([-100, 0, 0]) {
+        for (y = [0 : 1]) {
+            rotate([y == 0 ? -90 : 90, 0, 0])
+            translate([0, 0, 2])
+            mirror([0, y, 0]) {
+                difference() {
+                    union() {
+                        // Extra at both ends.
+                        translate([segment_size / 2 - segment_size / 4, 0, mould_bottom]) 
+                            cube([segment_size / 4, 
+                                      nozzle_divergent_diameter, 
+                                      mould_height]);
+                        translate([segment_size / 2 + segment_size * segments, 0, mould_bottom]) 
+                            cube([segment_size / 4, 
+                                      nozzle_divergent_diameter, 
+                                      mould_height]);
+                        translate([segment_size - segment_size / 2, 0, mould_bottom])
+                            cube([segment_size * segments, 
+                                      nozzle_divergent_diameter, 
+                                      mould_height]);
+                    };
+                    
+                    // Sprue Tree cross-hashes
+                    for (z = [0.5 : 3 : nozzle_height]) {
+                        translate([0, 0, casing_profile[1] + wall + z + .75]) {
+                            rotate([0, 90, 0]) {
+                                translate([0, 0, segment_size])
+                                    cylinder(d = 1 + printer_nozzle_od, h = segment_size * (segments - 1));
+                                // Air gaps
+                                translate([0, 0, 0])
+                                    cylinder(d = 0.75 + printer_nozzle_od, h = segment_size * (segments + 1));
+                            }
+                        }
+                    }
+
+                    for (x = [1 : segments + 1]) {
+                        $fn = 48;
+                        if (x <= segments)
+                        translate([x * segment_size, 0, casing_profile[1] + wall]) 
+                        render() {
+                            intersection() {
+                                parabola(nozzle_divergent_diameter,  
+                                    sqrt(nozzle_divergent_length / nozzle_divergent_diameter) / 2);
+                                union() {
+                                    for (z = [.5 : 3 : nozzle_height])  {
+                                        translate([0, 0, z]) 
+                                            cylinder(d = nozzle_divergent_diameter * 2 +
+                                                                printer_nozzle_od, 
+                                                         h = 1.5);
+                                    };
+                                    
+                                    cylinder(d = nozzle_throat_diameter + printer_nozzle_od, h = casing_profile[0]);
+                                }
+                            };
+                            
+                            // Air vents
+                            for (z = [.5 : 3 : nozzle_height])  {
+                                translate([0, 0, z + 0.75]) {
+                                    rotate([-90, 0, 0])
+                                        cylinder(d = 0.5 + printer_nozzle_od, h= 5);
+                                }
+                            }
+                        }
+
+                        // Igniter Hole
+                        translate([x * segment_size, 0, mould_bottom]) 
+                            cylinder(d = 1.5 + printer_nozzle_od, 
+                                         h = mould_height);
+
+                        translate([x * segment_size, 0, casing_profile[1] + wall]) {
+                            // Sprues
+                            if (x < segments) {
+                                if (y == 0) {
+                                    rotate([-90, 0 , 0]) {
+                                        translate([segment_size / 2, -nozzle_height / 2 - 2.5 / 2, -1]) 
+                                            cylinder(d1 = 2.5, d2 = 4 + printer_nozzle_od, h = 6);
+                                    }
+                                }
+                                // Sprue Tree
+                                translate([segment_size / 2, 0, 1])
+                                    cylinder(d = 1.5 + printer_nozzle_od, h = nozzle_height - 2.25);
+                            }
+                        }
+                            
+                        translate([x * segment_size, 0, 0]) {
+                            if (x == 1 || x == segments + 1) {
+                                // Bolt Holes
+                                translate([0, 0, mould_bottom]) {
+                                    translate([-segment_size / 2, 0, 1.5 + wall]) 
+                                    rotate([90, 0, 0]) {
+                                        cylinder(d = 3, h = 30, center = true);
+                                    }
+                                    translate([-segment_size / 2, 0, 
+                                        mould_height - casing_profile[0] - 1.5 - wall]) 
+                                    rotate([90, 0, 0]) {
+                                        cylinder(d = 3, h = 30, center = true);
+                                    }
+                                    translate([-segment_size / 2, 0, mould_height - 1.5 - wall]) 
+                                    rotate([90, 0, 0]) {
+                                        cylinder(d = 3, h = 30, center = true);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -279,10 +402,10 @@ if (ramming_rod == true) {
     translate([75, 0, 0]) {
         difference() {
             cylinder(d = engine_id - printer_nozzle_od - printer_nozzle_od,
-                         h = form_length + 5);
+                         h = form_length);
 
-            // Hollow for brass...
-            cylinder(d = 3 + printer_nozzle_od, h = form_length + 5);
+            // Hollow for brass... 1mm extra from the nozzle_throat.
+            cylinder(d = ramming_inner_diameter + printer_nozzle_od, h = form_length);
 
             // Top of nozzle marking.
             translate([0, 0, form_length - casing_profile[0]]) {
@@ -363,7 +486,7 @@ if (ramming_base == true) {
                 }
             }
             cylinder(d = 4.96 + printer_nozzle_od, h= 15);
-            cylinder(d = 20 + printer_nozzle_od, h = 4);
+            cylinder(d = 20 + printer_nozzle_od, h = 4.5);
         }
     }    
 }

@@ -143,7 +143,7 @@ difference() {
                         translate([fpv_board[0] / 4, fpv_board[1] / 2, 0]) cylinder(d = fpv_board[1], $fn = 6, h = fpv_board[2]);
                         translate([fpv_board[0] * 3/4, fpv_board[1] / 2, 0]) cylinder(d = fpv_board[1], $fn = 6, h = fpv_board[2]);
                         // cut for micro SD card insert...
-                        translate([8, -4, 0]) cube([15, 4, fpv_board[2]]);
+                        translate([12.5 + 5.5, -4, 0]) resize([18, 8, 0]) cylinder(d = 16, h = fpv_board[2], $fn = 6);
                     }
                 }
             }
