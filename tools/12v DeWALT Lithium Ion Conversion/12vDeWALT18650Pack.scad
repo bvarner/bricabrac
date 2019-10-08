@@ -20,233 +20,243 @@ retainer_height = lid_thickness + bms_clearance + pack_height + pack_elevation -
     
 $fn = $preview ? 24 : 90;
 
-difference() {
-    union() {
-        // bottom of the pack. 4.5mm radius applied.
-        hull() {
-            minkowski() {
-                translate([0, 0, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness + 4.5]) 
-                    lower_bottom_path(h = bottom_thickness, o = 0.5);
-                sphere(r = 4.5);
-            }
-            
-            // Top of the pack
-            translate([0, 0, -2.7 - lid_thickness]) {
-                // as traced.
-                // This option stinks, because it donks up the outer geometry
-                // around the latches.
-//                lower_top_path(h = lid_thickness, o = 0);
-                // 3mm outset applied to lower path.
-                // This option stinks, because some of the wall thickness is inconsistent.
-                lower_bottom_path(h = lid_thickness, o = 3);
-            }
-        }
+dotop = false;
+dobottom = false;
 
-        // Grip Ring Path.
-        // radius of the ring is 5.5
-        // exposed chord height is 1.25
-        // outer edge at this location is right around 2.75
-        translate([0, 0, -2.7 - lid_thickness - 5.5]) {
-            minkowski() {
-                lower_bottom_path(h = 0.01, o = 2.75 + (1.25 - (5.5 / 2)));
-                sphere(r = 5.5);
-            }
-        }
-        
-        
-    // latch button bulge. based on offset of the button hole.
-    // Notes on the latch bulge.
-    // chord length = 8
-    // chord height = 2
-    // circle r = 11
-    // 
-    xsymmetric() {
-        translate([29.55, 4.75, -13.45])
-            rotate([-90, 0, 88.25])
-                minkowski() {
-                    hull() {
-                        latch_button(h = 0.1, o = -3);
-                        translate([0, -3, 0])
-                            latch_button(h = 0.1, o = -3);
-                    }
-                    sphere(r = 10);
-                };
-    }
-        
-        
-// Sanity Check: Upper path as traced.
-//#        translate([0, 0, -2.7 - lid_thickness]) 
-//                lower_top_path(h = lid_thickness, o = 0);
-    }
-    
-    // cut the top of the thing flat.
-    translate([0, 0, -2.7])
-//    translate([0, 0, -49])
-        cylinder(r = 65, h = 20);
-    
-    // latch_button holes. (Cuts clear across the geometry)
-    translate([40, 4.375, -13.45])
-        rotate([-90, 0, 90])
-            latch_button(h = 80, o = 0.25);
-
-    // latch_button back opening
-    xsymmetric() {
-        difference() {
-            translate([70.66 / 2, 4.375, -15.25])
-            rotate([-90, 0, 90])
-            hull() {
-                latch_button_back(h = 6, o = 0.5);
-                translate([0, -5, 0])
-                    latch_button_back(h = 6, o = 0.5);
-            };
-            
-            // latch button pivot
-            latch_pivot();
-        }
-    }
-        
-    // Hollow the top for the upper portion
-    translate([0, 2.5, 0]) 
-        translate([0, 26.25 - 17 , -2.705 - lid_thickness]) 
-            upper_path(h = lid_thickness + 1);
-    
-    // hollow the main chasim.
-    // TODO: Remove the features we want as positives here.
-    // This is essentially the same as the outter wall, but inset.
-    difference() {
-        hull() {
-            minkowski() {
-                translate([0, 0, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation + (4.5 - bottom_thickness)]) 
-                    lower_bottom_path(h = 0.1, o = 0.5);
-                sphere(r = 4.5 - bottom_thickness);
-            }
-            translate([0, 0, -2.7 - lid_thickness]) {
-                lower_bottom_path(h = lid_thickness, o = 2);
-            }
-        }
-        
-        // Grip / Support cylinders
-        xsymmetric() {
-            translate([38.25, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
-                grip_cylinder(o = 2.5);
-            translate([11, 59.75, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
-                grip_cylinder(o = 2.5);
-            translate([24, -29.5, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
-                grip_cylinder(o = 2.5);
-        }
-        
-        // Anything removed here is a positive in the 
-        // bottom of the case.
-
-        // spring clip retainer
-        // clip is 7.5 wide.
-        xsymmetric() {
-            translate([31.875 - 3, -5 + 4, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
-                difference() {
-                    cube([4, 10.7, retainer_height]);
-                    translate([1, (10.7 - 7.5) / 2, 0]) 
-                        cube([2, 7.5, retainer_height + 6]);
-                }
-            }
-            latch_pivot();
-        }
-        
-        // Screw posts
-        translate([0, 2.5, 0]) {
-            xsymmetric() {
-                translate([-15, -27, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
-                    difference() {
-                        hull() {
-                            cylinder(d = post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
-                            translate([0, -post_diameter, 0])
-                                cylinder(d = 2 * post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
-                        }
-                        translate([0, 0, pack_elevation + pack_height + bms_clearance])
-                            dewalt_screw();
-                    }
-                }
-                // if the post diameter is 6mm.
-                // we'll need cell_l + slop + 6 between post centers for battery clearance.
-                translate([-15, -27 + cell_l + battery_slop + post_diameter, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
-                    difference() {
-                        hull() {
-                            cylinder(d = post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
-                            translate([0, post_diameter, 0])
-                                cylinder(d = 2 * post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
-                        }
-                        translate([0, 0, pack_elevation + pack_height + bms_clearance])
-                            dewalt_screw();
-                    }
-                }
-            }
-        }
-        
-        // pack elevation (bottom air flow) and reinforcement(sides)
-        for (py = [0: 15 : cell_l - 15]) {
-            translate([-40, -11.15 + py, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
-                cube([80, 1.29, py == 15 ? pack_elevation : pack_elevation + pack_height + bms_clearance]);
-            }
-        }
-        // lengthwise
-        translate([0, 0, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation * .5])
-            cube([1.29, 150, pack_elevation], center = true);
-        
-    }
-    
-    // cut the pack.
-    color("blue")
-    translate([0, 15, -2.7 - lid_thickness - bms_clearance - pack_height]) {
-        hull() {
-            xsymmetric() {
-                translate([cell_d, -cell_l / 2 - wrap_thickness, cell_d / 2 + wrap_thickness])
-                    rotate([-90, 0, 0]) cylinder(d = cell_d + wrap_thickness * 2, h = cell_l + 2 * wrap_thickness);
-            }
-            translate([0, 0, pack_height + bms_clearance - 0.5])
-                cube([cell_d * 3 + wrap_thickness * 2, cell_l + wrap_thickness * 2, 1], center = true);
-        }
-    }
-
-    xsymmetric() {
-        translate([38.25, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
-            grip_cylinder(o = 0);
-        translate([11, 59.75, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
-            grip_cylinder(o = 0);
-        translate([24, -29.5, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
-            grip_cylinder(o = 0);
-        
-    }
-
-    // embossed data on the bottom.
-    translate([0, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
-    mirror([1, 0, 0])
-        linear_extrude(height = 0.3) {
-            translate([0, 7, 0])
-                text("LiIon 6000mAh", font = "FreeSans:style=bold", spacing=1.225, size = 3, valign = "baseline", halign="center");
-            
-            text("Varnerized", font = "FreeSans:style=bold", size = 5, halign = "center");
-            translate([0, -1, 0]) square([35, 0.8], center = true);
-            translate([0, 6, 0]) square([35, 0.8], center = true);
-
-            translate([0, -18, 0]) {
-                text("WARNING", font = "FreeSans:style=bold", size = 4.5, halign = "center");
-                translate([0, -5, 0])
-                    text("Use only with properly", font = "FreeSans:style=regular", spacing=1.225, size = 3, valign = "baseline", halign="center");
-                translate([0, -10, 0])
-                    text("modified chargers.", font = "FreeSans:style=regular", spacing=1.225, size = 3, valign = "baseline", halign="center");
-                translate([0, -15, 0])
-                    text("Input: 12.6~13.6@20A max", font = "FreeSans:style=bold", spacing=1.225, size = 2.5, valign = "baseline", halign="center");
-                translate([0, -20, 0])
-                    text("Output: 7.2~12.6@40A cont", font = "FreeSans:style=bold", spacing=1.225, size = 2.5, valign = "baseline", halign="center");
-            }
-        }
+if (dotop) {
+    translate([0, 0, 5]) top();
 }
 
-// sanity check on latch size and spacing. should be 72mm
-//translate([0, -7, -2.7])
-//    cube([36, 22.8, 10]);
-    
+if (dobottom) {
+    bottom();
+}
 
-translate([0, 0, 5]) top();
+module bottom() {
+    difference() {
+        union() {
+            // bottom of the pack. 4.5mm radius applied.
+            hull() {
+                minkowski() {
+                    translate([0, 0, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness + 4.5]) 
+                        lower_bottom_path(h = bottom_thickness, o = 0.5);
+                    sphere(r = 4.5);
+                }
+                
+                // Top of the pack
+                translate([0, 0, -2.7 - lid_thickness]) {
+                    // as traced.
+                    // This option stinks, because it donks up the outer geometry
+                    // around the latches.
+    //                lower_top_path(h = lid_thickness, o = 0);
+                    // 3mm outset applied to lower path.
+                    // This option stinks, because some of the wall thickness is inconsistent.
+                    lower_bottom_path(h = lid_thickness, o = 3);
+                }
+            }
+
+            // Grip Ring Path.
+            // radius of the ring is 5.5
+            // exposed chord height is 1.25
+            // outer edge at this location is right around 2.75
+            translate([0, 0, -2.7 - lid_thickness - 5.5]) {
+                minkowski() {
+                    lower_bottom_path(h = 0.01, o = 2.75 + (1.25 - (5.5 / 2)));
+                    sphere(r = 5.5);
+                }
+            }
+            
+            
+        // latch button bulge. based on offset of the button hole.
+        // Notes on the latch bulge.
+        // chord length = 8
+        // chord height = 2
+        // circle r = 11
+        // 
+        xsymmetric() {
+            translate([29.55, 4.75, -13.45])
+                rotate([-90, 0, 88.25])
+                    minkowski() {
+                        hull() {
+                            latch_button(h = 0.1, o = -3);
+                            translate([0, -3, 0])
+                                latch_button(h = 0.1, o = -3);
+                        }
+                        sphere(r = 10);
+                    };
+        }
+            
+            
+    // Sanity Check: Upper path as traced.
+    //#        translate([0, 0, -2.7 - lid_thickness]) 
+    //                lower_top_path(h = lid_thickness, o = 0);
+        }
+        
+        // cut the top of the thing flat.
+        translate([0, 0, -2.7])
+    //    translate([0, 0, -49])
+            cylinder(r = 65, h = 20);
+        
+        // latch_button holes. (Cuts clear across the geometry)
+        translate([40, 4.375, -13.45])
+            rotate([-90, 0, 90])
+                latch_button(h = 80, o = 0.25);
+
+        // latch_button back opening
+        xsymmetric() {
+            difference() {
+                translate([70.66 / 2, 4.375, -15.25])
+                rotate([-90, 0, 90])
+                hull() {
+                    latch_button_back(h = 6, o = 0.5);
+                    translate([0, -5, 0])
+                        latch_button_back(h = 6, o = 0.5);
+                };
+                
+                // latch button pivot
+                latch_pivot();
+            }
+        }
+            
+        // Hollow the top for the upper portion
+        translate([0, 2.5, 0]) 
+            translate([0, 26.25 - 17 , -2.705 - lid_thickness]) 
+                upper_path(h = lid_thickness + 1);
+        
+        // hollow the main chasim.
+        // TODO: Remove the features we want as positives here.
+        // This is essentially the same as the outter wall, but inset.
+        difference() {
+            hull() {
+                minkowski() {
+                    translate([0, 0, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation + (4.5 - bottom_thickness)]) 
+                        lower_bottom_path(h = 0.1, o = 0.5);
+                    sphere(r = 4.5 - bottom_thickness);
+                }
+                translate([0, 0, -2.7 - lid_thickness]) {
+                    lower_bottom_path(h = lid_thickness, o = 2);
+                }
+            }
+            
+            // Grip / Support cylinders
+            xsymmetric() {
+                translate([38.25, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+                    grip_cylinder(o = 2.5);
+                translate([11, 59.75, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+                    grip_cylinder(o = 2.5);
+                translate([24, -29.5, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+                    grip_cylinder(o = 2.5);
+            }
+            
+            // Anything removed here is a positive in the 
+            // bottom of the case.
+
+            // spring clip retainer
+            // clip is 7.5 wide.
+            xsymmetric() {
+                translate([31.875 - 3, -5 + 4, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+                    difference() {
+                        cube([4, 10.7, retainer_height]);
+                        translate([1, (10.7 - 7.5) / 2, 0]) 
+                            cube([2, 7.5, retainer_height + 6]);
+                    }
+                }
+                latch_pivot();
+            }
+            
+            // Screw posts
+            translate([0, 2.5, 0]) {
+                xsymmetric() {
+                    translate([-15, -27, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+                        difference() {
+                            hull() {
+                                cylinder(d = post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
+                                translate([0, -post_diameter, 0])
+                                    cylinder(d = 2 * post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
+                            }
+                            translate([0, 0, pack_elevation + pack_height + bms_clearance])
+                                dewalt_screw();
+                        }
+                    }
+                    // if the post diameter is 6mm.
+                    // we'll need cell_l + slop + 6 between post centers for battery clearance.
+                    translate([-15, -27 + cell_l + battery_slop + post_diameter, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+                        difference() {
+                            hull() {
+                                cylinder(d = post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
+                                translate([0, post_diameter, 0])
+                                    cylinder(d = 2 * post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
+                            }
+                            translate([0, 0, pack_elevation + pack_height + bms_clearance])
+                                dewalt_screw();
+                        }
+                    }
+                }
+            }
+            
+            // pack elevation (bottom air flow) and reinforcement(sides)
+            for (py = [0: 15 : cell_l - 15]) {
+                translate([-40, -11.15 + py, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+                    cube([80, 1.29, py == 15 ? pack_elevation : pack_elevation + pack_height + bms_clearance]);
+                }
+            }
+            // lengthwise
+            translate([0, 0, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation * .5])
+                cube([1.29, 150, pack_elevation], center = true);
+            
+        }
+        
+        // cut the pack.
+        color("blue")
+        translate([0, 15, -2.7 - lid_thickness - bms_clearance - pack_height]) {
+            hull() {
+                xsymmetric() {
+                    translate([cell_d, -cell_l / 2 - wrap_thickness, cell_d / 2 + wrap_thickness])
+                        rotate([-90, 0, 0]) cylinder(d = cell_d + wrap_thickness * 2, h = cell_l + 2 * wrap_thickness);
+                }
+                translate([0, 0, pack_height + bms_clearance - 0.5])
+                    cube([cell_d * 3 + wrap_thickness * 2, cell_l + wrap_thickness * 2, 1], center = true);
+            }
+        }
+
+        xsymmetric() {
+            translate([38.25, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+                grip_cylinder(o = 0);
+            translate([11, 59.75, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+                grip_cylinder(o = 0);
+            translate([24, -29.5, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+                grip_cylinder(o = 0);
+            
+        }
+
+        // embossed data on the bottom.
+        translate([0, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+        mirror([1, 0, 0])
+            linear_extrude(height = 0.3) {
+                translate([0, 7, 0])
+                    text("LiIon 6000mAh", font = "FreeSans:style=bold", spacing=1.225, size = 3, valign = "baseline", halign="center");
+                
+                text("Varnerized", font = "FreeSans:style=bold", size = 5, halign = "center");
+                translate([0, -1, 0]) square([35, 0.8], center = true);
+                translate([0, 6, 0]) square([35, 0.8], center = true);
+
+                translate([0, -18, 0]) {
+                    text("WARNING", font = "FreeSans:style=bold", size = 4.5, halign = "center");
+                    translate([0, -5, 0])
+                        text("Use only with properly", font = "FreeSans:style=regular", spacing=1.225, size = 3, valign = "baseline", halign="center");
+                    translate([0, -10, 0])
+                        text("modified chargers.", font = "FreeSans:style=regular", spacing=1.225, size = 3, valign = "baseline", halign="center");
+                    translate([0, -15, 0])
+                        text("Input: 12.6~13.6@20A max", font = "FreeSans:style=bold", spacing=1.225, size = 2.5, valign = "baseline", halign="center");
+                    translate([0, -20, 0])
+                        text("Output: 7.2~12.6@40A cont", font = "FreeSans:style=bold", spacing=1.225, size = 2.5, valign = "baseline", halign="center");
+                }
+            }
+    }
+
+    // sanity check on latch size and spacing. should be 72mm
+    //translate([0, -7, -2.7])
+    //    cube([36, 22.8, 10]);
+}    
 
 module latch_pivot(){
     translate([28.65, -5 + 4, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
