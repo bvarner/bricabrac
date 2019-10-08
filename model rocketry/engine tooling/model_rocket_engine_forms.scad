@@ -38,12 +38,13 @@ outer_form = false;
 outer_form_tie = true;
 retainer_clip = false; 
 
-inner_form = true;
-inner_form_key = true;
+inner_form = false;
+inner_form_key = false;
 
-ramming_rod = true;
+ramming_rod = false;
 ramming_base = false;
-nozzle_forms = true;
+insitu_nozzle_forms = false;
+nozzle_forms= true;
 igniter_mould = false;
 
 
@@ -292,7 +293,86 @@ if (igniter_mould == true) {
 }
 
 
+// Use M4 screws and hex nuts to extract the nozzle from the form once it's cured.
 if (nozzle_forms == true) {
+    form_od = engine_od + printer_nozzle_od + wall + wall;
+    
+    difference() {
+        union() {
+            // lower form
+            difference() {
+                cylinder(d = form_od, h = casing_profile[0] + 5);
+                for (i = [0 : 1 : 2]) {
+                    rotate([0, 0, i * (360 / 3)])
+                    translate([form_od / 2 - 7.65 / 2, 0, 0]) {
+                        hull() {
+                            translate([0, 0, 0.6]) cylinder(d = 7.65, h = 3.25, $fn = 6);
+                            translate([5, 0, 0.6]) cylinder(d = 7.65, h = 3.25, $fn = 6);
+                        }
+                        // Prints well without support
+                        translate([0, 0, 0.6 + (3.25 + 0.15) / 2]) cube([4.15 + printer_nozzle_od, 6.8, 3.25 + 0.15], center = true);
+                        translate([0, 0, 0.6 + (3.25 + 0.30) / 2]) cube([4.15 + printer_nozzle_od, 4.15 + printer_nozzle_od, 3.25 + 0.30], center = true);
+                        cylinder(d = 4.15 + printer_nozzle_od, h = 5);
+                    }
+                }
+                
+                translate([0, 0, 5]) difference() {
+                    cylinder(d = engine_od + printer_nozzle_od, h = casing_profile[0]);
+                   
+                    union() {
+                        difference() {
+                                translate([0, 0, nozzle_height - 0.01]) mirror([0, 0, 1]) 
+                                {
+                                    intersection() {
+                                        parabola(nozzle_divergent_diameter, sqrt(nozzle_divergent_length / nozzle_divergent_diameter) / 2);
+                                        translate([0, 0, nozzle_height - casing_profile[0]])
+                                            cylinder(d = engine_id - printer_nozzle_od - printer_nozzle_od,
+                                                          h = casing_profile[0]);
+                                    }
+                                }
+
+                            // Remove the throat, so we can provide a flat top.
+                            cylinder(d = nozzle_throat_diameter + printer_nozzle_od,
+                                         h = casing_profile[0]);
+                        }
+                        
+                        // Add back in the throat with a nice flat top.
+                        cylinder(d = nozzle_throat_diameter + printer_nozzle_od, 
+                                                             h = casing_profile[0] - nozzle_convergent_length);
+                    
+                    }
+                }
+            }
+            
+            // upper form
+//            translate([0, 0, casing_profile[0] + 5 + nozzle_convergent_length + 5]) {
+//                difference() {
+//                    union() {
+//                        cylinder(d = form_od, h = 13);
+//                        mirror([0, 0, 1])
+//                            cylinder(d1 = engine_id - printer_nozzle_od - printer_nozzle_od,
+//                                         d2 = nozzle_throat_diameter + printer_nozzle_od,
+//                                         h = nozzle_convergent_length);
+//                    }
+//                    
+//                    // Knurl
+//                    translate([0, 0, 13])
+//                    mirror([0, 0, 1])
+//                    for(zr = [0 : 30 : 330]) {
+//                        rotate([0, 0, zr])
+//                            translate([form_od / 2 + 1, 0, 0])
+//                                cylinder(d1 = 4, d2 = 2, h = 13);
+//                    }
+//                }
+//            }
+        }
+        // Center bore for the alignment pin.
+        cylinder(d = nozzle_pin_diameter + printer_nozzle_od,
+                     h = 15 + 2 * casing_profile[0]);
+    }
+}
+
+if (insitu_nozzle_forms == true) {
     form_od = engine_od + printer_nozzle_od + wall + wall;
     
     // Nozzle Parabola on the top end for forming nozzles.
@@ -309,8 +389,8 @@ if (nozzle_forms == true) {
                             intersection() {
                                 parabola(nozzle_divergent_diameter, sqrt(nozzle_divergent_length / nozzle_divergent_diameter) / 2);
                                 translate([0, 0, nozzle_height - casing_profile[0]])
-                                cylinder(d = engine_id - printer_nozzle_od - printer_nozzle_od,
-                                     h = casing_profile[0]);
+                                    cylinder(d = engine_id - printer_nozzle_od - printer_nozzle_od,
+                                                  h = casing_profile[0]);
                             }
                         }
                     };
