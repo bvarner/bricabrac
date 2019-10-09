@@ -16,7 +16,7 @@ bottom_thickness = 2.4;
 r = 2;
 
 // Latch clip retainer height.
-retainer_height = lid_thickness + bms_clearance + pack_height + pack_elevation - 29;
+retainer_height = lid_thickness + bms_clearance + pack_height + pack_elevation - 29 + .75;
     
 $fn = $preview ? 24 : 90;
 
@@ -99,7 +99,7 @@ module bottom() {
         // latch_button holes. (Cuts clear across the geometry)
         translate([40, 4.375, -13.45])
             rotate([-90, 0, 90])
-                latch_button(h = 80, o = 0.25);
+                latch_button(h = 80, o = 0.1);
 
         // latch_button back opening
         xsymmetric() {
@@ -107,9 +107,9 @@ module bottom() {
                 translate([28.65 + 5 + 1 + nozzle_diameter, 4.375, -15.25])
                 rotate([-90, 0, 90])
                 hull() {
-                     latch_button_back(h = 6, o = 0.5);
+                    latch_button_back(h = 6, o = 0.1);
                     translate([0, -5, 0])
-                        latch_button_back(h = 6, o = 0.5);
+                        latch_button_back(h = 6, o = 0.1);
                 };
                 
                 // latch button pivot
@@ -276,12 +276,12 @@ module latch_pivot(){
     translate([28.65, -5 + 4, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
         translate([1.25, (10.7 - 7.5) / 2, 0]) {
             difference() {
-                translate([1.75, .75, retainer_height])
+                translate([1.75 + nozzle_diameter / 2, .75, retainer_height])
                 hull() {
-                    cube([2, 6, 4]);
-                    translate([(1.5 - nozzle_diameter) / 2, 0, 6.3 - 1.5 + nozzle_diameter])
+                    cube([2.25 - nozzle_diameter / 2, 6, 4]);
+                    translate([(1.5) / 2, 0, 6.3 - 1.5 + nozzle_diameter])
                         rotate([-90, 0, 0])
-                            cylinder(d = 1.5 - nozzle_diameter, h = 6);
+                            cylinder(d = 1.5, h = 6);
                 }
 
 // Sanity Check: Ledge Spacing
