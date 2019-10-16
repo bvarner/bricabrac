@@ -20,7 +20,7 @@ retainer_height = lid_thickness + bms_clearance + pack_height + pack_elevation -
     
 $fn = $preview ? 24 : 90;
 
-dotop = false;
+dotop = true;
 dobottom = false;
 
 if (dotop) {
@@ -315,10 +315,10 @@ module top() {
             // features so long as you don't have a cell occupying the center of the post.
             minkowski() {
                 union() {
-                    translate([0, -(34 - 28.4) / 2, 0]) 
-                        cylinder(d1 = 30  - 2 * r, d2 = 28.4 - 2 * r, h = 44.2 - r);
+                    translate([0, -(34 - 28.4) / 2, -2]) 
+                        cylinder(d1 = 30  - 2 * r, d2 = 28.4 - 2 * r, h = 46.2 - r);
                     intersection() {
-                        cylinder(d1 = 35.75 - 4 * r, d2 = 34 - 2 * r, h = 44.2 - r);
+                        cylinder(d1 = 35.75 - 2 * r, d2 = 34 - 2 * r, h = 44.2 - r);
                         hull() {
                             translate([-22.75 / 2 + r , 0, 0]) cube([22.75 - 2 * r, 35.5, 0.1]);
                             translate([-21 / 2 + r, 0, 44.2 - 0.1 - r]) cube([21 - 2 * r, 35.5, 0.1]);
