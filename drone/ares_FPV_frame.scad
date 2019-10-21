@@ -21,6 +21,12 @@ wall = 0.45; // one line
 twall = 0.87; // two lines
 fwall = 1.7; // four lines
 
+// Settings for a 0.25mm nozzle.
+//nozzle_diameter = 0.25;
+//wall = 0.48; // one line
+//twall = 0.71; // two lines
+//fwall = 0.94; // four lines
+
 motor_od = 8.5 + nozzle_diameter;
 motor_tight = motor_od - 0.25;
 
