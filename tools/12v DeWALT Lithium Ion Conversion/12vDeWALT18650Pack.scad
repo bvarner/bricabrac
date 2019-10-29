@@ -1,4 +1,4 @@
-nozzle_diameter = 0.4;
+nozzle_diameter = 0.25;
 
 lid_thickness = 3;
 battery_slop = 4; // Space between battery ends and the posts.
@@ -6,12 +6,12 @@ post_diameter = 6;
 
 cell_d = 18.25;
 cell_l = 65;
-wrap_thickness = 0.11;
+wrap_thickness = 0.3;
 
-bms_clearance = 4;
+bms_clearance = 5.5;
 pack_height = 2 * cell_d + 2 * wrap_thickness;
 pack_width =  3 * cell_d + 2 * wrap_thickness;
-pack_elevation = 2.5;
+pack_elevation = 2.25;
 bottom_thickness = 2.4;
 r = 2;
 
@@ -399,6 +399,30 @@ module top() {
         // Cut out the center... smaller section
         inner_tower_cut();
         
+        // Cut out where the BMS sits.. just a bit.
+        translate([-48 / 2 + 6.5, -35.75 / 2 + 6.5 + 2.75 , 0 - 2.75 - 0.1 - lid_thickness]) {
+            intersection() {
+                    hull() {
+                        translate([2.75, 0, 0])
+                            cylinder(r = 7.5, h = 1.75);
+                        translate([48 - 13 - 2.75, 0, 0])
+                            cylinder(r = 7.5, h = 1.75);
+                        translate([2.75, 53 - 13 - 5.5, 0])
+                            cylinder(r = 7.5, h = 1.75);
+                        translate([48 - 13 - 2.75, 53 - 13 - 5.5, 0])
+                            cylinder(r = 7.5, h = 1.75);
+                    }
+                // make sure we only grab the top half of this.
+                translate([-6.5, -9.25, 0]) union() {
+                    cube([48, 53, 1.5]);
+                    translate([48 / 2, 35.75 / 2, 1.5]) cube([25 + nozzle_diameter, 80, 0.6], center = true);
+                }
+            }
+            
+        }
+        
+        
+        
         translate([0, 2.5, 0]) {
             // Latch cutouts
             xsymmetric() {
@@ -461,11 +485,15 @@ module inner_tower_cut() {
             }
         }
         // Remove the section that helps hold the connector in place.
-        translate([-(24.1 + nozzle_diameter) / 2, -20.75 / 2 + 0.5 - 3.1, 44.2 - 2 - 2]) cube([24.1 + nozzle_diameter, 4.1, 2]);
+        translate([-(24.1 + nozzle_diameter) / 2, -20.75 / 2 + 0.5 - 3.1, 44.2 - 2 - 2]) cube([24.1 + nozzle_diameter, 4.75, 2]);
     }
     // Cut out the middle section
-    translate([-12.75 / 2, -20.75 / 2 + 0.5, 44.2 - 2])
-        cube([12.75, 20.75, 15]);
+    translate([-12.75 / 2, -20.75 / 2 + 0.5, 44.2 - 2]) {
+        hull() {
+            translate([(12.75 - 11.9) / 2, 0, 0]) cube([11.9, 20.75, 1]);
+            translate([0, 0, 14]) cube([12.75, 20.75, 1]);
+        }
+    }
 }
 
 module upper_path(h, o = 0) {
