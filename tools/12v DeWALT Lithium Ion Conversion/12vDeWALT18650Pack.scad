@@ -15,13 +15,16 @@ pack_elevation = 2.5;
 bottom_thickness = 2.4;
 r = 2;
 
+charge_indicator = false;
+ci_button_retainer_diameter = 1.65;
+
 // Latch clip retainer height.
 retainer_height = lid_thickness + bms_clearance + pack_height + pack_elevation - 29 + .75;
     
 $fn = $preview ? 24 : 90;
 
-dotop = true;
-dobottom = false;
+dotop = false;
+dobottom = true;
 
 if (dotop) {
     translate([0, 0, 5]) top();
@@ -155,7 +158,7 @@ module bottom() {
             xsymmetric() {
                 translate([38.25, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                     grip_cylinder(o = 2.5);
-                translate([11, 59.75, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+                translate([17, 59.25, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                     grip_cylinder(o = 2.5);
                 translate([24, -29.5, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                     grip_cylinder(o = 2.5);
@@ -204,7 +207,24 @@ module bottom() {
                                 dewalt_screw();
                         }
                     }
+                    // Midpoint screws
+                    translate([30.5, 22, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+                        difference() {
+                            hull() {
+                                cylinder(d = post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
+                                translate([post_diameter, 0, 0])
+                                    cylinder(d = 2 * post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
+                            }
+                            translate([0, 0, pack_elevation + pack_height + bms_clearance])
+                                dewalt_screw();
+                        }
+                    }
                 }
+            }
+            
+            // charge indicator surround.
+            if (charge_indicator) {
+                translate([0, 49.7 + 1.9 + 2, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation + 43.5 / 2]) rotate([-90.75, 0, 0]) cube([20 + bottom_thickness, 43.5 + bottom_thickness * 2, 7], center = true);
             }
             
             // pack elevation (bottom air flow) and reinforcement(sides)
@@ -213,29 +233,46 @@ module bottom() {
                     cube([80, 1.29, py == 15 ? pack_elevation : pack_elevation + pack_height + bms_clearance]);
                 }
             }
-            // lengthwise
-            translate([0, 0, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation * .5])
-                cube([1.29, 150, pack_elevation], center = true);
+            // lengthwise reinforcements
+            xsymmetric() {
+                translate([-15, 0, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation * .5])
+                    cube([1.29, 150, pack_elevation], center = true);
+            }
             
         }
         
         // cut the pack.
-        color("blue")
-        translate([0, 15, -2.7 - lid_thickness - bms_clearance - pack_height]) {
-            hull() {
-                xsymmetric() {
-                    translate([cell_d, -cell_l / 2 - wrap_thickness, cell_d / 2 + wrap_thickness])
-                        rotate([-90, 0, 0]) cylinder(d = cell_d + wrap_thickness * 2, h = cell_l + 2 * wrap_thickness);
+        color("blue") {
+            translate([0, 15, -2.7 - lid_thickness - bms_clearance - pack_height]) {
+                hull() {
+                    xsymmetric() {
+                        translate([cell_d, -cell_l / 2 - wrap_thickness, cell_d / 2 + wrap_thickness])
+                            rotate([-90, 0, 0]) cylinder(d = cell_d + wrap_thickness * 2, h = cell_l + 2 * wrap_thickness);
+                    }
+                    translate([0, 0, pack_height + bms_clearance - 0.5])
+                        cube([cell_d * 3 + wrap_thickness * 2, cell_l + wrap_thickness * 2, 1], center = true);
                 }
-                translate([0, 0, pack_height + bms_clearance - 0.5])
-                    cube([cell_d * 3 + wrap_thickness * 2, cell_l + wrap_thickness * 2, 1], center = true);
+            }
+            // Cut the charge indicator and button recesses
+            if (charge_indicator) {
+                translate([0, 49.5, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation + (43.5 + nozzle_diameter * 1.5) / 2]) rotate([-90.75, 0, 0]) {
+                    rotate([0, 0, 180]) charge_indicator();
+                    translate([-7.5, (41.5 - 4.5) / 2, 3]) {
+                        rotate([0, -3.5, 0]) {
+                            // 3x6x3.5 tactile button
+                            tactile_button(depth = 3);
+                            
+                            
+                        }
+                    }
+                }
             }
         }
 
         xsymmetric() {
             translate([38.25, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                 grip_cylinder(o = 0);
-            translate([11, 59.75, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+            translate([17, 59.25, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                 grip_cylinder(o = 0);
             translate([24, -29.5, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                 grip_cylinder(o = 0);
@@ -246,23 +283,25 @@ module bottom() {
         translate([0, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
         mirror([1, 0, 0])
             linear_extrude(height = 0.3) {
-                translate([0, 7, 0])
-                    text("LiIon 6000mAh", font = "FreeSans:style=bold", spacing=1.225, size = 3, valign = "baseline", halign="center");
+                translate([0, 9, 0])
+                    text("LiIon 6000mAh", font = "FreeSans:style=bold", spacing=1.225, size = 4, valign = "baseline", halign="center");
                 
-                text("Varnerized", font = "FreeSans:style=bold", size = 5, halign = "center");
-                translate([0, -1, 0]) square([35, 0.8], center = true);
-                translate([0, 6, 0]) square([35, 0.8], center = true);
+                text("Varnerized", font = "FreeSans:style=bold", size = 6.5, halign = "center");
+                translate([0, -1, 0]) square([45, 0.8], center = true);
+                translate([0, 8, 0]) square([45, 0.8], center = true);
 
-                translate([0, -18, 0]) {
-                    text("WARNING", font = "FreeSans:style=bold", size = 4.5, halign = "center");
-                    translate([0, -5, 0])
-                        text("Use only with properly", font = "FreeSans:style=regular", spacing=1.225, size = 3, valign = "baseline", halign="center");
-                    translate([0, -10, 0])
-                        text("modified chargers.", font = "FreeSans:style=regular", spacing=1.225, size = 3, valign = "baseline", halign="center");
-                    translate([0, -15, 0])
-                        text("Input: 12.6~13.6@20A max", font = "FreeSans:style=bold", spacing=1.225, size = 2.5, valign = "baseline", halign="center");
-                    translate([0, -20, 0])
-                        text("Output: 7.2~12.6@40A cont", font = "FreeSans:style=bold", spacing=1.225, size = 2.5, valign = "baseline", halign="center");
+                translate([0, -14, 0]) {
+                    text("WARNING", font = "FreeSans:style=bold", size = 5, halign = "center");
+
+                    translate([8, -5, 0])
+                        text("Rated Input:", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="right");
+                    translate([-6, -10, 0])
+                        text("12.6V@1A", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="left");
+
+                    translate([8, -20, 0])
+                        text("Max Output:", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="right");
+                    translate([-21, -25, 0])
+                        text("7.2~12.6V@40A", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="left");
                 }
             }
     }
@@ -295,10 +334,83 @@ module latch_pivot(){
     }
 }    
 
+// 3S charge indicator module:
+module charge_indicator(positive = true) {
+    p = positive ? (nozzle_diameter * 1.5) : 0;
+    
+    translate([((5.25 + p) / -2) - 0.375, ((43.5 + p) / -2) - 0.075, -2.4])
+    union() {
+        // PCB.
+        difference() {
+            union() {
+                cube([5.25 + p, 43.5 + p, 3]);
+                translate([-5.5 - p / 2, 1 + p / 2, 0]) 
+                    cube([16.5 + p, 41.5 + p, 3]);
+            }
+        
+            // Mounting holes
+            translate([(5.25 + p) / 2, 4.125 + (p / 2), 1.5]) {
+                cylinder(d = 1.75, h = 4, $fn = 32, center = true);
+                translate([0, 36, 0])
+                    cylinder(d = 1.75, h = 4, $fn = 32, center = true);
+            }
+        }
+        
+        // Display
+        translate([-5.5 - p / 2 - 1.5, 1 + 4.7 + p / 2, 3])
+            translate([]) cube([20 + p, 31.25 + p, 6 + (positive ? 8 : 0)]);
+        
+        if (positive) {
+            // Mounting holes
+            translate([(5.25 + p) / 2, 4.125 + (p / 2), 0]) {
+                cylinder(d = 1.75, h = 8, $fn = 32);
+                translate([0, 36, 0])
+                    cylinder(d = 1.75, h = 8, $fn = 32);
+            }
+        }
+    }
+}
+
+
+module tactile_button(positive = true, depth = 0, retention_depth = 2) {
+    p = positive ? (nozzle_diameter * 1.5) : 0;
+    
+    translate([(6 + p) / -2, (3.5 + p) / -2, -depth]) union() {
+        translate([0, 0, 0.35]) {
+            // body
+            cube([6 + p, 3.5 + p, 3 + depth]);
+
+            // button
+            translate([3 / 2, 1.95 / 2, 0])
+                cube([3 + p, 1.55 + p, 4.75 + depth]);
+        }
+        
+        // standoffs
+        translate([0, 0, depth]) {
+            cube([1.15 + p, 3.5 + p, 0.35]);
+            translate([6 + p - 1.15 - p, 0, 0])
+                cube([1.15 + p, 3.5 + p, 0.35]);
+        }
+        
+        // Egress of solder joints
+        translate([-1.5 - p, 1, 0]) cube([1.5 + p, 1.5 + p, 2 + depth]);
+        translate([6 + p, 1, 0]) cube([1.5 + p, 1.5 + p, 2 + depth]);
+    }
+    
+    // retention holes
+    translate([0, 0, (ci_button_retainer_diameter + nozzle_diameter) / -2 + 0.35 + nozzle_diameter / 2]) rotate([90, 0, 0]) cylinder(d = ci_button_retainer_diameter + nozzle_diameter, h = 3.5 + p + (retention_depth * 2), center = true, $fn = 32);
+}
 
 module xsymmetric() {
     for (mx = [0, 1]) {
         mirror([mx, 0, 0])
+            children();
+    }
+}
+
+module ysymmetric() {
+    for (my = [0, 1]) {
+        mirror([0, my, 0])
             children();
     }
 }
@@ -415,6 +527,12 @@ module top() {
                 // if the post diameter is 6mm.
                 // we'll need cell_l + slop + 6 between post centers for battery clearance.
                 translate([-15, -27 + cell_l + battery_slop + post_diameter, -2.75 - 2]) {
+                    dewalt_screw();
+                    translate([0, 0, 2 - lid_thickness]) screw_hole_bottom(h = ((lid_thickness - 2) / 2) - 0.3);
+                }
+                
+                // Midpoint screws
+                translate([30.5, 22, -2.75 - 2]) {
                     dewalt_screw();
                     translate([0, 0, 2 - lid_thickness]) screw_hole_bottom(h = ((lid_thickness - 2) / 2) - 0.3);
                 }
