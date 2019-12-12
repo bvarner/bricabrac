@@ -15,16 +15,18 @@ pack_elevation = 2.5;
 bottom_thickness = 2.4;
 r = 2;
 
-charge_indicator = true;
-ci_button_retainer_diameter = 1.65;
-
 // Latch clip retainer height.
 retainer_height = lid_thickness + bms_clearance + pack_height + pack_elevation - 29 + .75;
     
 $fn = $preview ? 24 : 90;
 
-dotop = false;
-dobottom = true;
+part="top";
+
+opts = "charge_indicator";
+charge_indicator = (opts == "charge_indicator") ? true : false;
+
+dotop = (part == "both" || part == "top") ? true : false;
+dobottom = (part == "both" || part == "bottom") ? true : false;
 
 if (dotop) {
     translate([0, 0, 5]) top();
@@ -409,9 +411,6 @@ module tactile_button(positive = true, depth = 0, retention_depth = 2) {
         translate([-1.5 - p, 1, 0]) cube([1.5 + p, 1.5 + p, 2 + depth]);
         translate([6 + p, 1, 0]) cube([1.5 + p, 1.5 + p, 2 + depth]);
     }
-    
-    // retention holes
-    translate([0, 0, (ci_button_retainer_diameter + nozzle_diameter) / -2 + 0.35 + nozzle_diameter / 2]) rotate([90, 0, 0]) cylinder(d = ci_button_retainer_diameter + nozzle_diameter, h = 3.5 + p + (retention_depth * 2), center = true, $fn = 32);
 }
 
 module xsymmetric() {
@@ -551,13 +550,6 @@ module top() {
                 }
             }
         }
-
-        // Text, because... :-)
-        translate([-28.5, 40, -2.7 - 0.6])
-            rotate([0, 0, -90])
-                linear_extrude(height = 1)
-                    text("12v DeWALT LiIon", font = "FreeSans:style=Bold", size = 4, valign = "baseline");
-        
     }
     
     // latch cutout supports (for printing)

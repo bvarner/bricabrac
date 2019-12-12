@@ -1,0 +1,3 @@
+#!/bin/sh
+
+parallel openscad-nightly -o 12v_LiIon_{1}_{2}_{3}.stl -D 'part=\"{1}\"' -D 'opts=\"{2}\"' -D 'nozzle_diameter={3}' 12vDeWALT18650Pack.scad ::: top bottom ::: charge_indicator no_charge_indicator ::: 0.25 0.4
