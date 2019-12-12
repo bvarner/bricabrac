@@ -493,7 +493,7 @@ module top() {
                             translate([48 - 13 - 2.75, 53 - 13 - 5.5, 0])
                                 cylinder(r = 6.5, h = 0.1);
                         }
-                        sphere(r = 2.75, fn = $24);
+                        sphere(r = 2.75, $fn = 24);
                     }
                     // make sure we only grab the top half of this.
                     translate([-6.5, -9.25, 0])
