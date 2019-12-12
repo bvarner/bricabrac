@@ -15,7 +15,7 @@ pack_elevation = 2.5;
 bottom_thickness = 2.4;
 r = 2;
 
-charge_indicator = false;
+charge_indicator = true;
 ci_button_retainer_diameter = 1.65;
 
 // Latch clip retainer height.
@@ -96,8 +96,21 @@ module bottom() {
         
         // cut the top of the thing flat.
         translate([0, 0, -2.7])
-    //    translate([0, 0, -49])
             cylinder(r = 65, h = 20);
+        
+        
+        // Cut the recess indent on the bottom, for the labels.
+        translate([0, 0, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+        difference() {
+            lower_bottom_path(h = .45, o = -0.5);
+            translate([0, 0, 0.5])minkowski() {
+                difference() {
+                    lower_bottom_path(h = 1, o = -0.5);
+                    lower_bottom_path(h = 1, o = -2.5);
+                }
+                sphere(r = 0.5, $fn = 32);
+            }
+        }        
         
         // latch_button holes. (Cuts clear across the geometry)
         translate([40, 4.375, -13.45])
@@ -280,30 +293,30 @@ module bottom() {
         }
 
         // embossed data on the bottom.
-        translate([0, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
-        mirror([1, 0, 0])
-            linear_extrude(height = 0.3) {
-                translate([0, 9, 0])
-                    text("LiIon 6000mAh", font = "FreeSans:style=bold", spacing=1.225, size = 4, valign = "baseline", halign="center");
-                
-                text("Varnerized", font = "FreeSans:style=bold", size = 6.5, halign = "center");
-                translate([0, -1, 0]) square([45, 0.8], center = true);
-                translate([0, 8, 0]) square([45, 0.8], center = true);
-
-                translate([0, -14, 0]) {
-                    text("WARNING", font = "FreeSans:style=bold", size = 5, halign = "center");
-
-                    translate([8, -5, 0])
-                        text("Rated Input:", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="right");
-                    translate([-6, -10, 0])
-                        text("12.6V@1A", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="left");
-
-                    translate([8, -20, 0])
-                        text("Max Output:", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="right");
-                    translate([-21, -25, 0])
-                        text("7.2~12.6V@40A", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="left");
-                }
-            }
+//        translate([0, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+//        mirror([1, 0, 0])
+//            linear_extrude(height = 0.3) {
+//                translate([0, 9, 0])
+//                    text("LiIon 6000mAh", font = "FreeSans:style=bold", spacing=1.225, size = 4, valign = "baseline", halign="center");
+//                
+//                text("Varnerized", font = "FreeSans:style=bold", size = 6.5, halign = "center");
+//                translate([0, -1, 0]) square([45, 0.8], center = true);
+//                translate([0, 8, 0]) square([45, 0.8], center = true);
+//
+//                translate([0, -14, 0]) {
+//                    text("WARNING", font = "FreeSans:style=bold", size = 5, halign = "center");
+//
+//                    translate([8, -5, 0])
+//                        text("Rated Input:", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="right");
+//                    translate([-6, -10, 0])
+//                        text("12.6V@1A", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="left");
+//
+//                    translate([8, -20, 0])
+//                        text("Max Output:", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="right");
+//                    translate([-21, -25, 0])
+//                        text("7.2~12.6V@40A", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="left");
+//                }
+//            }
     }
 
     // sanity check on latch size and spacing. should be 72mm
