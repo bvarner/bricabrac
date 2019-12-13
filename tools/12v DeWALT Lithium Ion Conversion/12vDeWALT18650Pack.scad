@@ -23,6 +23,7 @@ $fn = $preview ? 24 : 90;
 part="top";
 
 opts = "charge_indicator";
+charge_indicator = (opts == "charge_indicator") ? true : false;
 
 dotop = (part == "both" || part == "top") ? true : false;
 dobottom = (part == "both" || part == "bottom") ? true : false;
