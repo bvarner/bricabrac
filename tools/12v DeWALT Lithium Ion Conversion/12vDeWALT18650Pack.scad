@@ -1,4 +1,4 @@
-nozzle_diameter = 0.4;
+nozzle_diameter = 0.25;
 
 lid_thickness = 3;
 battery_slop = 4; // Space between battery ends and the posts.
@@ -23,7 +23,6 @@ $fn = $preview ? 24 : 90;
 part="top";
 
 opts = "charge_indicator";
-charge_indicator = (opts == "charge_indicator") ? true : false;
 
 dotop = (part == "both" || part == "top") ? true : false;
 dobottom = (part == "both" || part == "bottom") ? true : false;
@@ -110,7 +109,7 @@ module bottom() {
                     lower_bottom_path(h = 1, o = -0.5);
                     lower_bottom_path(h = 1, o = -2.5);
                 }
-                sphere(r = 0.5, $fn = 32);
+                sphere(r = 0.5, $fn = 14);
             }
         }        
         
@@ -293,32 +292,6 @@ module bottom() {
                 grip_cylinder(o = 0);
             
         }
-
-        // embossed data on the bottom.
-//        translate([0, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
-//        mirror([1, 0, 0])
-//            linear_extrude(height = 0.3) {
-//                translate([0, 9, 0])
-//                    text("LiIon 6000mAh", font = "FreeSans:style=bold", spacing=1.225, size = 4, valign = "baseline", halign="center");
-//                
-//                text("Varnerized", font = "FreeSans:style=bold", size = 6.5, halign = "center");
-//                translate([0, -1, 0]) square([45, 0.8], center = true);
-//                translate([0, 8, 0]) square([45, 0.8], center = true);
-//
-//                translate([0, -14, 0]) {
-//                    text("WARNING", font = "FreeSans:style=bold", size = 5, halign = "center");
-//
-//                    translate([8, -5, 0])
-//                        text("Rated Input:", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="right");
-//                    translate([-6, -10, 0])
-//                        text("12.6V@1A", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="left");
-//
-//                    translate([8, -20, 0])
-//                        text("Max Output:", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="right");
-//                    translate([-21, -25, 0])
-//                        text("7.2~12.6V@40A", font = "FreeSans:style=regular", spacing=1.225, size = 4, valign = "baseline", halign="left");
-//                }
-//            }
     }
 
     // sanity check on latch size and spacing. should be 72mm
@@ -428,7 +401,6 @@ module ysymmetric() {
 }
 
 module top() {
-
     // Debug cylinder
     //translate([0, 0, 44.2])
     //    cylinder(d = 28.4, h = 1);
@@ -480,7 +452,7 @@ module top() {
             }
             
             // lower hump beneath stack.
-            translate([-48 / 2 + 6.5, -35.75 / 2 + 6.5 + 2.75 , 0 - 2.75 - 0.1]) {
+            translate([-48 / 2 + 6.5, -35.75 / 2 + 6.5 + 2.75, 0 - 2.75 - 0.1]) {
                 intersection() {
                     minkowski() {
                         hull() {
@@ -497,7 +469,7 @@ module top() {
                     }
                     // make sure we only grab the top half of this.
                     translate([-6.5, -9.25, 0])
-                    cube([48, 53, 2.7]);
+                        cube([48, 53, 2.7]);
                 }
             }
             
@@ -522,6 +494,34 @@ module top() {
         
         // Cut out the center... smaller section
         inner_tower_cut();
+
+
+        
+        // lower hump hollow beneath stack.
+        translate([-48 / 2 + 6.5, -35.75 / 2 + 6.5 + 2.75 , 0 - 2.75 - 0.1 - 3.5]) {
+            intersection() {
+                minkowski() {
+                    hull() {
+                        translate([2.75, 0, 0])
+                            cylinder(r = 6.5, h = 0.1);
+                        translate([48 - 13 - 2.75, 0, 0])
+                            cylinder(r = 6.5, h = 0.1);
+                        translate([2.75, 53 - 13 - 5.5, 0])
+                            cylinder(r = 6.5, h = 0.1);
+                        translate([48 - 13 - 2.75, 53 - 13 - 5.5, 0])
+                            cylinder(r = 6.5, h = 0.1);
+                    }
+                    sphere(r = 2, $fn = 15);
+                }
+                // make sure we only grab the top half of this.
+                union() {
+                    translate([-6.5, -9.25, 0])
+                        cube([48, 53, 2.7]);
+                    translate([48 / 2 - 6.5, 9.25 + 6.5 + 2.75 / 2, 1.5])
+                        cube([25 + nozzle_diameter, 53, 3], center = true);
+                }
+            }
+        }
         
         translate([0, 2.5, 0]) {
             // Latch cutouts
