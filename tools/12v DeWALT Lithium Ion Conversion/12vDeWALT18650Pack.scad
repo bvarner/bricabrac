@@ -495,11 +495,26 @@ module top() {
         
         // Cut out the center... smaller section
         inner_tower_cut();
+        
+        // Easier printing of the inner_tower cut can be accomplished by....
+        hull() {
+            intersection() {
+                inner_tower_cut();
+                translate([0, 0, -4]) {
+                    cylinder(d = 29.75 + nozzle_diameter, h = 0.1);
+                }
+            }
+            intersection() {
+                translate([0, -(34 - 28.4) / 2, -2])
+                    cylinder(d = 25 + nozzle_diameter, h = 0.1);
+            }
+        }
+
 
 
         
         // lower hump hollow beneath stack.
-        translate([-48 / 2 + 6.5, -35.75 / 2 + 6.5 + 2.75 , 0 - 2.75 - 0.1 - 3.5]) {
+        translate([-48 / 2 + 6.5, -35.75 / 2 + 6.5 + 2.75 , 0 - 2.75 - 0.1 - 3]) {
             intersection() {
                 minkowski() {
                     hull() {
@@ -564,6 +579,7 @@ module top() {
     }
 }
 
+
 module inner_tower_cut() {
     difference() {
         union() {
@@ -584,6 +600,7 @@ module inner_tower_cut() {
                 }
             }
         }
+        
         // Remove the section that helps hold the connector in place.
         translate([-(24.1 + nozzle_diameter) / 2, -20.75 / 2 + 0.5 - 3.1, 44.2 - 2 - 2]) cube([24.1 + nozzle_diameter, 4.1, 2]);
     }
