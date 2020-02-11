@@ -13,6 +13,8 @@ pack_height = 2 * cell_d + 2 * wrap_thickness;
 pack_width =  3 * cell_d + 2 * wrap_thickness;
 pack_elevation = 2.5;
 bottom_thickness = 2.4;
+// Springs are 7.5mm wide, or 10mm wide, depending on spring type.
+spring_width = 10;
 r = 2;
 
 // Latch clip retainer height.
@@ -20,7 +22,7 @@ retainer_height = lid_thickness + bms_clearance + pack_height + pack_elevation -
     
 $fn = $preview ? 24 : 90;
 
-part="top";
+part="bottom";
 
 opts = "charge_indicator";
 charge_indicator = (opts == "charge_indicator") ? true : false;
@@ -184,12 +186,15 @@ module bottom() {
 
             // spring clip retainer
             // clip is 7.5 wide.
+            // wall is 1.6mm per side.
+            // all positioning was based on the 7.5mm width.
+            // So we need to offset by (spring_width - 7.5) / 2
             xsymmetric() {
-                translate([31.875 - 3, -5 + 4, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+                translate([31.875 - 3, -1 - ((spring_width - 7.5) / 2), -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
                     difference() {
-                        cube([5., 10.7, retainer_height]);
-                        translate([1, (10.7 - 7.5) / 2, 0]) 
-                            cube([2, 7.5, retainer_height + 6]);
+                        cube([5., 1.6 + 1.6 + spring_width, retainer_height]);
+                        translate([1, 1.6, 0]) 
+                            cube([2, spring_width, retainer_height + 6]);
                     }
                 }
                 latch_pivot();
@@ -301,15 +306,15 @@ module bottom() {
 }    
 
 module latch_pivot(){
-    translate([28.65, -5 + 4, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
-        translate([1.25, (10.7 - 7.5) / 2, 0]) {
+    translate([28.65, -1 - ((spring_width - 7.5) / 2), -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+        translate([1.25, 1.6, 0]) {
             difference() {
                 translate([1.75 + nozzle_diameter / 2, .75, retainer_height])
                 hull() {
-                    cube([2.25 - nozzle_diameter / 2, 6, 4]);
+                    cube([2.25 - nozzle_diameter / 2, spring_width - 1.5, 4]);
                     translate([(1.5) / 2, 0, 6.3 - 1.5 + nozzle_diameter])
                         rotate([-90, 0, 0])
-                            cylinder(d = 1.5, h = 6);
+                            cylinder(d = 1.5, h = spring_width - 1.5);
                 }
 
 // Sanity Check: Ledge Spacing
@@ -347,7 +352,7 @@ module charge_indicator(positive = true) {
         
         // Display
         translate([-5.5 - p / 2 - 1.5, 1 + 4.7 + p / 2, 3])
-            translate([]) cube([20 + p, 31.25 + p, 6 + (positive ? 8 : 0)]);
+            translate([0, 0, 0]) cube([20 + p, 31.25 + p, 6 + (positive ? 8 : 0)]);
         
         if (positive) {
             // Mounting holes
