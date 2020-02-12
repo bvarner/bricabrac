@@ -1,3 +1,3 @@
 #!/bin/sh
 
-parallel --nice 19 openscad -o 12v_LiIon_{1}_{2}_{3}_{4}.stl -D 'part=\"{1}\"' -D 'indicator=\"{2}\"' -D 'spring=\"{3}\"' -D 'nozzle_diameter={4}' 12vDeWALT18650Pack.scad ::: top bottom ::: charge_indicator no_charge_indicator ::: wide_spring narrow_spring ::: 0.25 0.4
+parallel --nice 19 -j 2 openscad -o 12v_LiIon_{1}_{2}_{3}_{4}.stl -D 'part=\"{1}\"' -D 'indicator=\"{2}\"' -D 'spring=\"{3}\"' -D 'nozzle_diameter={4}' 12vDeWALT18650Pack.scad ::: top bottom ::: charge_indicator no_charge_indicator ::: wide_spring narrow_spring ::: 0.25 0.4
