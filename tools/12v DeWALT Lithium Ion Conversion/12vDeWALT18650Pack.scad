@@ -13,8 +13,7 @@ pack_height = 2 * cell_d + 2 * wrap_thickness;
 pack_width =  3 * cell_d + 2 * wrap_thickness;
 pack_elevation = 2.5;
 bottom_thickness = 2.4;
-// Springs are 7.5mm wide, or 10mm wide, depending on spring type.
-spring_width = 10;
+
 r = 2;
 
 // Latch clip retainer height.
@@ -24,8 +23,13 @@ $fn = $preview ? 24 : 90;
 
 part="bottom";
 
-opts = "charge_indicator";
-charge_indicator = (opts == "charge_indicator") ? true : false;
+indicator = "charge_indicator";
+charge_indicator = (indicator == "charge_indicator") ? true : false;
+
+spring = "wide_spring";
+// Springs are 7.5mm wide, or 10mm wide, depending on spring type.
+spring_width = (spring == "wide_spring") ? 10 : 7.5;
+
 
 dotop = (part == "both" || part == "top") ? true : false;
 dobottom = (part == "both" || part == "bottom") ? true : false;
@@ -193,8 +197,16 @@ module bottom() {
                 translate([31.875 - 3, -1 - ((spring_width - 7.5) / 2), -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
                     difference() {
                         cube([5., 1.6 + 1.6 + spring_width, retainer_height]);
-                        translate([1, 1.6, 0]) 
-                            cube([2, spring_width, retainer_height + 6]);
+                        translate([1, 1.6, 0]) {
+                            difference() {
+                                cube([2, spring_width, retainer_height + 6]);
+                                // center cut for the wide format spring.
+                                if (spring_width == 10) {
+                                    translate([0, 3.75 + nozzle_diameter / 2, 0]) 
+                                        cube([2, 2.25 - nozzle_diameter, retainer_height + 6]);
+                                }
+                            }
+                        }
                     }
                 }
                 latch_pivot();
@@ -305,16 +317,17 @@ module bottom() {
     //    cube([36, 22.8, 10]);
 }    
 
+// The latch pivot is always the same size, regardless of the spring_width.
 module latch_pivot(){
-    translate([28.65, -1 - ((spring_width - 7.5) / 2), -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+    translate([28.65, -1, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
         translate([1.25, 1.6, 0]) {
             difference() {
-                translate([1.75 + nozzle_diameter / 2, .75, retainer_height])
+                translate([1.75 + nozzle_diameter / 2, .75 / 2, retainer_height])
                 hull() {
-                    cube([2.25 - nozzle_diameter / 2, spring_width - 1.5, 4]);
+                    cube([2.25 - nozzle_diameter / 2, 7 - nozzle_diameter, 4]);
                     translate([(1.5) / 2, 0, 6.3 - 1.5 + nozzle_diameter])
                         rotate([-90, 0, 0])
-                            cylinder(d = 1.5, h = spring_width - 1.5);
+                            cylinder(d = 1.5, h = 7);
                 }
 
 // Sanity Check: Ledge Spacing
