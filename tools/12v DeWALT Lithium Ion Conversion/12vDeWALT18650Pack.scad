@@ -19,7 +19,7 @@ r = 2;
 // Latch clip retainer height.
 retainer_height = lid_thickness + bms_clearance + pack_height + pack_elevation - 29 + .75;
     
-$fn = $preview ? 24 : 90;
+$fn = $preview ? 16 : 90;
 
 part="bottom";
 
@@ -203,7 +203,7 @@ module bottom() {
                                 // center cut for the wide format spring.
                                 if (spring_width == 10) {
                                     translate([0, 3.75 + nozzle_diameter / 2, 0]) 
-                                        cube([2, 2.25 - nozzle_diameter, retainer_height + 6]);
+                                        cube([2, 2.25 - nozzle_diameter, retainer_height - 1.5]);
                                 }
                             }
                         }
