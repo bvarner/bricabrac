@@ -1,4 +1,4 @@
-nozzle_diameter = 0.4;
+nozzle_diameter = 0.25;
 
 lid_thickness = 3;
 battery_slop = 4; // Space between battery ends and the posts.
@@ -13,15 +13,26 @@ pack_height = 2 * cell_d + 2 * wrap_thickness;
 pack_width =  3 * cell_d + 2 * wrap_thickness;
 pack_elevation = 2.5;
 bottom_thickness = 2.4;
+
 r = 2;
 
 // Latch clip retainer height.
 retainer_height = lid_thickness + bms_clearance + pack_height + pack_elevation - 29 + .75;
     
-$fn = $preview ? 24 : 90;
+$fn = $preview ? 16 : 90;
 
-dotop = true;
-dobottom = false;
+part="bottom";
+
+indicator = "charge_indicator";
+charge_indicator = (indicator == "charge_indicator") ? true : false;
+
+spring = "wide_spring";
+// Springs are 7.5mm wide, or 10mm wide, depending on spring type.
+spring_width = (spring == "wide_spring") ? 10 : 7.5;
+
+
+dotop = (part == "both" || part == "top") ? true : false;
+dobottom = (part == "both" || part == "bottom") ? true : false;
 
 if (dotop) {
     translate([0, 0, 5]) top();
@@ -93,8 +104,21 @@ module bottom() {
         
         // cut the top of the thing flat.
         translate([0, 0, -2.7])
-    //    translate([0, 0, -49])
             cylinder(r = 65, h = 20);
+        
+        
+        // Cut the recess indent on the bottom, for the labels.
+        translate([0, 0, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+        difference() {
+            lower_bottom_path(h = .45, o = -0.5);
+            translate([0, 0, 0.5])minkowski() {
+                difference() {
+                    lower_bottom_path(h = 1, o = -0.5);
+                    lower_bottom_path(h = 1, o = -2.5);
+                }
+                sphere(r = 0.5, $fn = 14);
+            }
+        }        
         
         // latch_button holes. (Cuts clear across the geometry)
         translate([40, 4.375, -13.45])
@@ -155,7 +179,7 @@ module bottom() {
             xsymmetric() {
                 translate([38.25, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                     grip_cylinder(o = 2.5);
-                translate([11, 59.75, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+                translate([17, 59.25, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                     grip_cylinder(o = 2.5);
                 translate([24, -29.5, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                     grip_cylinder(o = 2.5);
@@ -166,12 +190,23 @@ module bottom() {
 
             // spring clip retainer
             // clip is 7.5 wide.
+            // wall is 1.6mm per side.
+            // all positioning was based on the 7.5mm width.
+            // So we need to offset by (spring_width - 7.5) / 2
             xsymmetric() {
-                translate([31.875 - 3, -5 + 4, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+                translate([31.875 - 3, -1 - ((spring_width - 7.5) / 2), -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
                     difference() {
-                        cube([5., 10.7, retainer_height]);
-                        translate([1, (10.7 - 7.5) / 2, 0]) 
-                            cube([2, 7.5, retainer_height + 6]);
+                        cube([5., 1.6 + 1.6 + spring_width, retainer_height]);
+                        translate([1, 1.6, 0]) {
+                            difference() {
+                                cube([2, spring_width, retainer_height + 6]);
+                                // center cut for the wide format spring.
+                                if (spring_width == 10) {
+                                    translate([0, 3.75 + nozzle_diameter / 2, 0]) 
+                                        cube([2, 2.25 - nozzle_diameter, retainer_height - 1.5]);
+                                }
+                            }
+                        }
                     }
                 }
                 latch_pivot();
@@ -204,7 +239,24 @@ module bottom() {
                                 dewalt_screw();
                         }
                     }
+                    // Midpoint screws
+                    translate([30.5, 22, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+                        difference() {
+                            hull() {
+                                cylinder(d = post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
+                                translate([post_diameter, 0, 0])
+                                    cylinder(d = 2 * post_diameter - nozzle_diameter, h = pack_elevation + pack_height + bms_clearance);
+                            }
+                            translate([0, 0, pack_elevation + pack_height + bms_clearance])
+                                dewalt_screw();
+                        }
+                    }
                 }
+            }
+            
+            // charge indicator surround.
+            if (charge_indicator) {
+                translate([0, 49.7 + 1.9 + 2, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation + 43.5 / 2]) rotate([-90.75, 0, 0]) cube([20 + bottom_thickness, 43.5 + bottom_thickness * 2, 7], center = true);
             }
             
             // pack elevation (bottom air flow) and reinforcement(sides)
@@ -213,58 +265,51 @@ module bottom() {
                     cube([80, 1.29, py == 15 ? pack_elevation : pack_elevation + pack_height + bms_clearance]);
                 }
             }
-            // lengthwise
-            translate([0, 0, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation * .5])
-                cube([1.29, 150, pack_elevation], center = true);
+            // lengthwise reinforcements
+            xsymmetric() {
+                translate([-15, 0, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation * .5])
+                    cube([1.29, 150, pack_elevation], center = true);
+            }
             
         }
         
         // cut the pack.
-        color("blue")
-        translate([0, 15, -2.7 - lid_thickness - bms_clearance - pack_height]) {
-            hull() {
-                xsymmetric() {
-                    translate([cell_d, -cell_l / 2 - wrap_thickness, cell_d / 2 + wrap_thickness])
-                        rotate([-90, 0, 0]) cylinder(d = cell_d + wrap_thickness * 2, h = cell_l + 2 * wrap_thickness);
+        color("blue") {
+            translate([0, 15, -2.7 - lid_thickness - bms_clearance - pack_height]) {
+                hull() {
+                    xsymmetric() {
+                        translate([cell_d, -cell_l / 2 - wrap_thickness, cell_d / 2 + wrap_thickness])
+                            rotate([-90, 0, 0]) cylinder(d = cell_d + wrap_thickness * 2, h = cell_l + 2 * wrap_thickness);
+                    }
+                    translate([0, 0, pack_height + bms_clearance - 0.5])
+                        cube([cell_d * 3 + wrap_thickness * 2, cell_l + wrap_thickness * 2, 1], center = true);
                 }
-                translate([0, 0, pack_height + bms_clearance - 0.5])
-                    cube([cell_d * 3 + wrap_thickness * 2, cell_l + wrap_thickness * 2, 1], center = true);
+            }
+            // Cut the charge indicator and button recesses
+            if (charge_indicator) {
+                translate([0, 49.5, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation + (43.5 + nozzle_diameter * 1.5) / 2]) rotate([-90.75, 0, 0]) {
+                    rotate([0, 0, 180]) charge_indicator();
+                    translate([-7.5, (41.5 - 4.5) / 2, 3]) {
+                        rotate([0, -3.5, 0]) {
+                            // 3x6x3.5 tactile button
+                            tactile_button(depth = 3);
+                            
+                            
+                        }
+                    }
+                }
             }
         }
 
         xsymmetric() {
             translate([38.25, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                 grip_cylinder(o = 0);
-            translate([11, 59.75, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
+            translate([17, 59.25, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                 grip_cylinder(o = 0);
             translate([24, -29.5, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
                 grip_cylinder(o = 0);
             
         }
-
-        // embossed data on the bottom.
-        translate([0, 30, -2.7 - lid_thickness - bms_clearance - pack_height - pack_elevation - bottom_thickness])
-        mirror([1, 0, 0])
-            linear_extrude(height = 0.3) {
-                translate([0, 7, 0])
-                    text("LiIon 6000mAh", font = "FreeSans:style=bold", spacing=1.225, size = 3, valign = "baseline", halign="center");
-                
-                text("Varnerized", font = "FreeSans:style=bold", size = 5, halign = "center");
-                translate([0, -1, 0]) square([35, 0.8], center = true);
-                translate([0, 6, 0]) square([35, 0.8], center = true);
-
-                translate([0, -18, 0]) {
-                    text("WARNING", font = "FreeSans:style=bold", size = 4.5, halign = "center");
-                    translate([0, -5, 0])
-                        text("Use only with properly", font = "FreeSans:style=regular", spacing=1.225, size = 3, valign = "baseline", halign="center");
-                    translate([0, -10, 0])
-                        text("modified chargers.", font = "FreeSans:style=regular", spacing=1.225, size = 3, valign = "baseline", halign="center");
-                    translate([0, -15, 0])
-                        text("Input: 12.6~13.6@20A max", font = "FreeSans:style=bold", spacing=1.225, size = 2.5, valign = "baseline", halign="center");
-                    translate([0, -20, 0])
-                        text("Output: 7.2~12.6@40A cont", font = "FreeSans:style=bold", spacing=1.225, size = 2.5, valign = "baseline", halign="center");
-                }
-            }
     }
 
     // sanity check on latch size and spacing. should be 72mm
@@ -272,16 +317,17 @@ module bottom() {
     //    cube([36, 22.8, 10]);
 }    
 
+// The latch pivot is always the same size, regardless of the spring_width.
 module latch_pivot(){
-    translate([28.65, -5 + 4, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
-        translate([1.25, (10.7 - 7.5) / 2, 0]) {
+    translate([28.65, -1, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
+        translate([1.25, 1.6, 0]) {
             difference() {
-                translate([1.75 + nozzle_diameter / 2, .75, retainer_height])
+                translate([1.75 + nozzle_diameter / 2, .75 / 2, retainer_height])
                 hull() {
-                    cube([2.25 - nozzle_diameter / 2, 6, 4]);
+                    cube([2.25 - nozzle_diameter / 2, 7 - nozzle_diameter, 4]);
                     translate([(1.5) / 2, 0, 6.3 - 1.5 + nozzle_diameter])
                         rotate([-90, 0, 0])
-                            cylinder(d = 1.5, h = 6);
+                            cylinder(d = 1.5, h = 7);
                 }
 
 // Sanity Check: Ledge Spacing
@@ -295,6 +341,69 @@ module latch_pivot(){
     }
 }    
 
+// 3S charge indicator module:
+module charge_indicator(positive = true) {
+    p = positive ? (nozzle_diameter * 1.5) : 0;
+    
+    translate([((5.25 + p) / -2) - 0.375, ((43.5 + p) / -2) - 0.075, -2.4])
+    union() {
+        // PCB.
+        difference() {
+            union() {
+                cube([5.25 + p, 43.5 + p, 3]);
+                translate([-5.5 - p / 2, 1 + p / 2, 0]) 
+                    cube([16.5 + p, 41.5 + p, 3]);
+            }
+        
+            // Mounting holes
+            translate([(5.25 + p) / 2, 4.125 + (p / 2), 1.5]) {
+                cylinder(d = 1.75, h = 4, $fn = 32, center = true);
+                translate([0, 36, 0])
+                    cylinder(d = 1.75, h = 4, $fn = 32, center = true);
+            }
+        }
+        
+        // Display
+        translate([-5.5 - p / 2 - 1.5, 1 + 4.7 + p / 2, 3])
+            translate([0, 0, 0]) cube([20 + p, 31.25 + p, 6 + (positive ? 8 : 0)]);
+        
+        if (positive) {
+            // Mounting holes
+            translate([(5.25 + p) / 2, 4.125 + (p / 2), 0]) {
+                cylinder(d = 1.75, h = 8, $fn = 32);
+                translate([0, 36, 0])
+                    cylinder(d = 1.75, h = 8, $fn = 32);
+            }
+        }
+    }
+}
+
+
+module tactile_button(positive = true, depth = 0, retention_depth = 2) {
+    p = positive ? (nozzle_diameter * 1.5) : 0;
+    
+    translate([(6 + p) / -2, (3.5 + p) / -2, -depth]) union() {
+        translate([0, 0, 0.35]) {
+            // body
+            cube([6 + p, 3.5 + p, 3 + depth]);
+
+            // button
+            translate([3 / 2, 1.95 / 2, 0])
+                cube([3 + p, 1.55 + p, 4.75 + depth]);
+        }
+        
+        // standoffs
+        translate([0, 0, depth]) {
+            cube([1.15 + p, 3.5 + p, 0.35]);
+            translate([6 + p - 1.15 - p, 0, 0])
+                cube([1.15 + p, 3.5 + p, 0.35]);
+        }
+        
+        // Egress of solder joints
+        translate([-1.5 - p, 1, 0]) cube([1.5 + p, 1.5 + p, 2 + depth]);
+        translate([6 + p, 1, 0]) cube([1.5 + p, 1.5 + p, 2 + depth]);
+    }
+}
 
 module xsymmetric() {
     for (mx = [0, 1]) {
@@ -303,8 +412,14 @@ module xsymmetric() {
     }
 }
 
-module top() {
+module ysymmetric() {
+    for (my = [0, 1]) {
+        mirror([0, my, 0])
+            children();
+    }
+}
 
+module top() {
     // Debug cylinder
     //translate([0, 0, 44.2])
     //    cylinder(d = 28.4, h = 1);
@@ -356,7 +471,7 @@ module top() {
             }
             
             // lower hump beneath stack.
-            translate([-48 / 2 + 6.5, -35.75 / 2 + 6.5 + 2.75 , 0 - 2.75 - 0.1]) {
+            translate([-48 / 2 + 6.5, -35.75 / 2 + 6.5 + 2.75, 0 - 2.75 - 0.1]) {
                 intersection() {
                     minkowski() {
                         hull() {
@@ -369,11 +484,11 @@ module top() {
                             translate([48 - 13 - 2.75, 53 - 13 - 5.5, 0])
                                 cylinder(r = 6.5, h = 0.1);
                         }
-                        sphere(r = 2.75, fn = $24);
+                        sphere(r = 2.75, $fn = 24);
                     }
                     // make sure we only grab the top half of this.
                     translate([-6.5, -9.25, 0])
-                    cube([48, 53, 2.7]);
+                        cube([48, 53, 2.7]);
                 }
             }
             
@@ -399,6 +514,49 @@ module top() {
         // Cut out the center... smaller section
         inner_tower_cut();
         
+        // Easier printing of the inner_tower cut can be accomplished by....
+        hull() {
+            intersection() {
+                inner_tower_cut();
+                translate([0, 0, -4]) {
+                    cylinder(d = 29.75 + nozzle_diameter, h = 0.1);
+                }
+            }
+            intersection() {
+                translate([0, -(34 - 28.4) / 2, -2])
+                    cylinder(d = 25 + nozzle_diameter, h = 0.1);
+            }
+        }
+
+
+
+        
+        // lower hump hollow beneath stack.
+        translate([-48 / 2 + 6.5, -35.75 / 2 + 6.5 + 2.75 , 0 - 2.75 - 0.1 - 3]) {
+            intersection() {
+                minkowski() {
+                    hull() {
+                        translate([2.75, 0, 0])
+                            cylinder(r = 6.5, h = 0.1);
+                        translate([48 - 13 - 2.75, 0, 0])
+                            cylinder(r = 6.5, h = 0.1);
+                        translate([2.75, 53 - 13 - 5.5, 0])
+                            cylinder(r = 6.5, h = 0.1);
+                        translate([48 - 13 - 2.75, 53 - 13 - 5.5, 0])
+                            cylinder(r = 6.5, h = 0.1);
+                    }
+                    sphere(r = 2, $fn = 15);
+                }
+                // make sure we only grab the top half of this.
+                union() {
+                    translate([-6.5, -9.25, 0])
+                        cube([48, 53, 2.7]);
+                    translate([48 / 2 - 6.5, 9.25 + 6.5 + 2.75 / 2, 1.5])
+                        cube([25 + nozzle_diameter, 53, 3], center = true);
+                }
+            }
+        }
+        
         translate([0, 2.5, 0]) {
             // Latch cutouts
             xsymmetric() {
@@ -418,15 +576,14 @@ module top() {
                     dewalt_screw();
                     translate([0, 0, 2 - lid_thickness]) screw_hole_bottom(h = ((lid_thickness - 2) / 2) - 0.3);
                 }
+                
+                // Midpoint screws
+                translate([30.5, 22, -2.75 - 2]) {
+                    dewalt_screw();
+                    translate([0, 0, 2 - lid_thickness]) screw_hole_bottom(h = ((lid_thickness - 2) / 2) - 0.3);
+                }
             }
         }
-
-        // Text, because... :-)
-        translate([-28.5, 40, -2.7 - 0.6])
-            rotate([0, 0, -90])
-                linear_extrude(height = 1)
-                    text("12v DeWALT LiIon", font = "FreeSans:style=Bold", size = 4, valign = "baseline");
-        
     }
     
     // latch cutout supports (for printing)
@@ -439,6 +596,7 @@ module top() {
         }
     }
 }
+
 
 module inner_tower_cut() {
     difference() {
@@ -460,6 +618,7 @@ module inner_tower_cut() {
                 }
             }
         }
+        
         // Remove the section that helps hold the connector in place.
         translate([-(24.1 + nozzle_diameter) / 2, -20.75 / 2 + 0.5 - 3.1, 44.2 - 2 - 2]) cube([24.1 + nozzle_diameter, 4.1, 2]);
     }
