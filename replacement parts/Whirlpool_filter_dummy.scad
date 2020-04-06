@@ -1,8 +1,11 @@
 $fn = $preview ? 32 : 90;
 
+height = 110;
+
+translate([0, 0, 5])
 difference() {
     minkowski() {
-        cylinder(d = 39, h = 88);
+        cylinder(d = 39, h = height - 10);
         sphere(d = 10);
     }
     for (my = [0, 1]) {
