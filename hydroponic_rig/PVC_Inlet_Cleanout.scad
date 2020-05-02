@@ -9,6 +9,7 @@ difference() {
         // The cap
         // taper decreases as z increases, so we rotate it upside down.
         translate([0, 0, 7/8 * 25.4])
+        rotate([0, 0, 180]) // Screwed into my fitting upside down.... so we rotate it.
         rotate([180, 0, 0]) {
             english_thread(diameter = 4.5 - (0.03937008 * (1 + printer_extrusion_width)),
                            threads_per_inch = 8, 

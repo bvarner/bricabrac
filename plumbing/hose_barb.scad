@@ -30,6 +30,7 @@ barb(hose_od = hose_od, hose_id = hose_id, swell = swell, wall_thickness = wall_
 
 module barb(hose_od = 21.5, hose_id = 15, swell = 1, wall_thickness = 1.31, barbs = 3, barb_length = 2, shell = true, bore = true, ezprint = true) {
     id = hose_id - (2 * wall_thickness);
+    echo("id: ", id);
     translate([0, 0, -((barb_length * (barbs + 1)) + 4.5 + (hose_od - hose_id))])
     difference() {
         union() {

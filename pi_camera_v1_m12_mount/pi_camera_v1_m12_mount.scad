@@ -22,7 +22,7 @@ enable_thread = true;	// Turn on/off thread (takes a while to render)
 enable_base = true;		// Turn on/off square base
 enable_mount = true;	// Turn on/off circular mount
 
-$fn = 90;
+$fn = $preview ? 32 : 90;
 
 // Base
 if(enable_base) {

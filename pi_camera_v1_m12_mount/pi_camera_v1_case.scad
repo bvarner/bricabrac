@@ -18,7 +18,7 @@ z = board_z_padding[0] + board_z + board_z_padding[1] + top;
 
 pegs = false;
 
-$fn = 90;
+$fn = $preview ? 32 : 90;
 case_front();
 case_back();
 
