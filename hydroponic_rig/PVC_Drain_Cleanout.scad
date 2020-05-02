@@ -55,12 +55,12 @@ difference() {
         }
         
         // Air Vent
-        for(rz = [-10 : 1 : 10]) {
-            rotate([0, 0, rz])
-                translate([0, (pipe_id / 2) - ideal_perimeter - (1/4 * 25.4), (1/8 + 1/4) * 25.4])
-                    rotate([-10, 0, 0]) 
-                        cylinder(d = 1/4 * 25.4, h = 7/8 * 25.4);
-        }
+//        for(rz = [-10 : 1 : 10]) {
+//            rotate([0, 0, rz])
+//                translate([0, (pipe_id / 2) - ideal_perimeter - (1/4 * 25.4), (1/8 + 1/4) * 25.4])
+//                    rotate([-10, 0, 0]) 
+//                        cylinder(d = 1/4 * 25.4, h = 7/8 * 25.4);
+//        }
         
         // M4 tappable plug hole for draining.
         translate([0, -1 * (pipe_id / 2 - 3.7 / 2), 0]) {
