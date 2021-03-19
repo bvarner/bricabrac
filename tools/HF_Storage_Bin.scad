@@ -101,15 +101,15 @@ box_width = 2;
 box_length = 2;
 
 // Box Depth how tall the box is (for stacking).
-box_depth = 1/2; // [1:1, 0.5:1/2, 0.33333:1/3, 0.25:1/4, 0.75:3/4, 0.66666:2/3]
+box_depth = 1; // [1:1, 0.5:1/2, 0.33333:1/3, 0.25:1/4, 0.75:3/4, 0.66666:2/3]
 
 // Is the box the top box in the stack?
-top_of_stack = 0; // [1:Yes, 0:No]
+top_of_stack = 1; // [1:Yes, 0:No]
 
 // How many subdivisions along the width of the box.
-subdivisions_wide = 3;
+subdivisions_wide = 1;
 // How many subdivisions along the length of the box.
-subdivisions_long = 2;
+subdivisions_long = 1;
 
 // Separate the feet from the box? (for easier printing)
 separate_feet = 1;
@@ -123,7 +123,7 @@ wall_thickness = 0.85;
 bottom_thickness = 1.25;
 
 // The height of the wider reinforcing lip at the top of the box.
-lip_height = 1.25;
+lip_height = 1.5;
 
 /* [Hidden] */
 $fn = 64;
@@ -141,7 +141,8 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
     lip = .5;
     corner_radius = 2.5;
     taper = 1;
-    foot_height = 2.5;
+    foot_height = 3.85;
+    box_height = 47.5;
 
     // Size of a 'small' unit in the storage system.
     unit_length = 54.5 * box_size[0];
@@ -185,7 +186,12 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
                     // top lip.
                     minkowski() {
                         translate([-top_lip_length / 2, -top_lip_width / 2, 0]) cube([top_lip_length, top_lip_width, lip_height / 2]);
-                        cylinder(r = corner_radius, h = lip_height / 2);
+                        union() {
+                            cylinder(r = corner_radius, h = lip_height / 2);
+                            translate([0, 0, lip_height / 2]) 
+                            cylinder(r1 = corner_radius, 
+                                                r2 = corner_radius - wall_thickness / 2, h = lip_height / 2);
+                        }
                     }
 
                     // Taperd Body
@@ -226,6 +232,7 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
                         scale([corner_radius - wall_thickness, corner_radius - wall_thickness, bottom_thickness * 2])
                             sphere(r = 1);
                     }
+                    
                     
                     // Now that there's a positive shape for being pushed into the tray to form the inside,
                     // remove any divider walls from the positive.
@@ -277,6 +284,23 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
                             translate([-top_inside_length / 2 - corner_radius, top_inside_width / 2 + corner_radius, 0]) 
                                 rotate([0, 90, 0]) 
                                     cylinder(r = 3.5, h = top_inside_length + 2 * corner_radius);
+                        }
+                    }
+                    
+                    // If is_top != true && x_div <= 1 && y_div <= 1
+                    // Then we need to remove the corners to block for stacking.
+                    if (is_top != true && x_div <= 1 && y_div <= 1) {
+                        for (mx = [0, 1]) {
+                            mirror([mx, 0, 0]) {
+                                for (my = [0, 1]) {
+                                    mirror([0, my, 0]) {
+                                        translate([-top_length / 2 - (wall_thickness / 2) - corner_radius,
+                                                   -top_width / 2 - corner_radius, 0])
+                                            translate([wall_thickness, wall_thickness, foot_height + wall_thickness])
+                                                cylinder(d = wall_thickness * 2 + 2 * corner_radius, h = unit_height);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
