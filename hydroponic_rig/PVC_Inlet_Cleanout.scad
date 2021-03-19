@@ -17,7 +17,8 @@ difference() {
                            taper = 1/16, 
                            leadin = 1,
                            leadfac = 3,
-                           internal = false
+                           internal = false,
+                           test = $preview
             );
             cylinder(d = (4.25 * 25.4) - (0.03937008 * 1 + printer_extrusion_width), h = 7/8 * 25.4, $fn = $preview ? 50: 180);
         }

@@ -9,7 +9,7 @@ use <threads.scad>;
 quality = "normal";
 $fn = (quality == "insane") ? 360 : ($preview ? 24 : 90);
 
-part="both";
+part="bottom";
 
 dotop = (part == "both" || part == "top") ? true : false;
 dobottom = (part == "both" || part == "bottom") ? true : false;
@@ -22,6 +22,8 @@ thick_wall = 2.54;
 // Shell Thickness, 7 layers top bottom, first layer 0.15mm
 top = 1.05;
 bottom = 1.05;
+
+adjustment_screw_clearance = 7;
 
 // Produce a cut-away of the main housing?
 debug = false;
@@ -70,17 +72,21 @@ module lower_part() {
                     translate([0, 0, 6]) {
                         cylinder(d1 = housing_od, d2 = 29.75, h = 14);
                         translate([0, 0, 14]) {
-                            cylinder(d1 = 29.75, d2 = 28.75, h = 21);
+                            // Add some extra here to account for adjustment screw.
+                            cylinder(d = 29.75, h = adjustment_screw_clearance);
+                            translate([0, 0, adjustment_screw_clearance]) {
+                                cylinder(d1 = 29.75, d2 = 28.75, h = 21);
+                            }
                         }
                     }
                 }
             }
             
             // center bore
-            translate([0, 0, -45]) {
+            translate([0, 0, -60]) {
                 cylinder(d = center_bore, h = 22.5 + bottom + inToMm(1/2) + 2 + 45);
             
-                translate([0, 0, 21 + 14 + 2])
+                translate([0, 0, 21 + 14 + 2 + 15])
                 // knurling
                 for (i = [0 : 7.5 : 360]) {
                     rotate([0, 0, i]) {

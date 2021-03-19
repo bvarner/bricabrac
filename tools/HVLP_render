@@ -1,2 +1,3 @@
 #!/bin/sh
-parallel --nice 19 -j 2 openscad -o HVLP_Inline_AirFilter_{1}.stl -D 'part=\"{1}\"' -D 'quality=\"insane\"' HVLP_Inline_AirFilter.scad ::: top bottom
+#parallel --nice 19 -j 2 openscad -o HVLP_Inline_AirFilter_{1}.stl -D 'part=\"{1}\"' -D 'quality=\"insane\"' HVLP_Inline_AirFilter.scad ::: top bottom
+parallel --nice 19 -j 2 openscad -o HVLP_Inline_AirFilter_{1}.stl -D 'part=\"{1}\"' -D 'quality=\"insane\"' HVLP_Inline_AirFilter.scad ::: bottom
