@@ -98,7 +98,7 @@
 // Number of units wide a box is.
 box_width = 2; 
 // Number of units long a box is.
-box_length = 2;
+box_length = 3;
 
 // Box Depth how tall the box is (for stacking).
 box_depth = 1; // [1:1, 0.5:1/2, 0.33333:1/3, 0.25:1/4, 0.75:3/4, 0.66666:2/3]
@@ -115,7 +115,7 @@ subdivisions_long = 1;
 separate_feet = 1;
 // Slop to use when creating the joinery hole for the foot.
 // 0.4 works well when using a 0.4mm nozzle.
-foot_joinery_slop = 0.3;
+foot_joinery_slop = 0.25;
 
 /* [Print Tweaks] */
 // Specify this based on your print settings.
@@ -140,7 +140,7 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
     // Things I measured from the PP bins that came with my storage boxes...
     lip = .5;
     corner_radius = 2.5;
-    taper = 1;
+    taper = 0.9;
     foot_height = 3.85;
     box_height = 47.5;
 
@@ -287,9 +287,9 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
                         }
                     }
                     
-                    // If is_top != true && x_div <= 1 && y_div <= 1
                     // Then we need to remove the corners to block for stacking.
-                    if (is_top != true && x_div <= 1 && y_div <= 1) {
+                    // Set the threshold to 2, so that the upper stack doesn't "rock" back and forth.
+                    if (is_top != true && x_div <= 2 && y_div <= 2) {
                         for (mx = [0, 1]) {
                             mirror([mx, 0, 0]) {
                                 for (my = [0, 1]) {
