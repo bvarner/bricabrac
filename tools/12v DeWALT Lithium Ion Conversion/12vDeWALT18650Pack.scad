@@ -14,6 +14,9 @@ pack_width =  3 * cell_d + 2 * wrap_thickness;
 pack_elevation = 2.5;
 bottom_thickness = 2.4;
 
+connection_retainer_inset = 0.85;
+connection_retainer_vertical_play = 0.25;
+
 r = 2;
 
 // Latch clip retainer height.
@@ -21,9 +24,9 @@ retainer_height = lid_thickness + bms_clearance + pack_height + pack_elevation -
     
 $fn = $preview ? 16 : 90;
 
-part="bottom";
+part="top";
 
-indicator = "charge_indicator";
+indicator = "charge_indicator";  
 charge_indicator = (indicator == "charge_indicator") ? true : false;
 
 spring = "wide_spring";
@@ -502,8 +505,8 @@ module top() {
                         hull() {
                             translate([-35.05 + 0.5, -12.18, -2.75])
                                 cube([4.75 - 1, 27.7, 1.4 - 0.5]);
-                            translate([-35.05 + 2, -12.18 - 1.5 + 0.5, -2.75])
-                                cube([4.75 - 1.5, 27.7 + 3 - 1, 1.4 - 0.5]);
+                            translate([-35.05 + 5, -12.18 - 2, -2.75])
+#                                cube([4.75 - 1.5, 27.7 + 3, 1.4 - 0.5]);
                         }
                         sphere(r = 0.5);
                     }
@@ -601,8 +604,17 @@ module top() {
 module inner_tower_cut() {
     difference() {
         union() {
-            translate([0, -(34 - 28.4) / 2, -10]) 
-                cylinder(d = 25 + nozzle_diameter, h = 44.2 - 2 + 10 + 0);
+            translate([0, -(34 - 28.4) / 2, -10]) {
+                difference() {
+                    cylinder(d = 25 + nozzle_diameter, h = 44.2 - 2 + 10 + 0);
+                    translate([0, 0, 44.2 - 2 + 10 - 2 - 2.5 - 3 - connection_retainer_vertical_play]) {
+                        difference() {
+                            cylinder(d = 25 + nozzle_diameter, h = 3 + connection_retainer_vertical_play);
+                            cylinder(d1 = 25 + nozzle_diameter, d2 = 25 + nozzle_diameter - (2 * connection_retainer_inset), h = 3 + connection_retainer_vertical_play);
+                        }
+                    }
+                }
+            }
             translate([0, 0, -10]) {
                 union() {
                     intersection() {
