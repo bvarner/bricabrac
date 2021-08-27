@@ -1,15 +1,16 @@
 // points of interest.
-base_max_elevation = 72;
+base_max_elevation = 87;
 base_min_elevation = 30;
 
 spacing = 220;
 spacing_trim = 0.15;
+wall_thickness = 1.24;
 
 laptop_depth = 230;
 laptop_thickness_at_rear = 15.5;
 laptop_thickness_at_front = 14.5;
 
-support_ratio = 4/5;
+support_ratio = 9/10;
 separate_by = 20;
 
 // calculate the rise from min_elevation to max_elevation over a tangent distance of laptop_depth
@@ -61,6 +62,9 @@ module side() {
         
         
         translate([2, 0, 0])
+            spreader_bar();
+
+        translate([0, -(base_length * (1 - support_ratio)) - 15 / 2 - 1, support_leg + base_min_elevation - 15 / 2 - 15 / 2 - 5])
             spreader_bar();
     }
 }
