@@ -105,6 +105,7 @@ box_depth = 0.5; // [1:1, 0.5:1/2, 0.33333:1/3, 0.25:1/4, 0.75:3/4, 0.66666:2/3]
 
 // Is the box the top box in the stack?
 top_of_stack = 1; // [1:Yes, 0:No]
+lid = 0; // [1:Yes, 0:No]
 
 // How many subdivisions along the width of the box.
 subdivisions_wide = 2;
@@ -157,12 +158,6 @@ hf_tray(box_size = [box_width, box_length, box_depth],
             is_top = (top_of_stack == 1));
 
 module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, lip_height = 0.75, is_top = true) {
-    // Things I measured from the PP bins that came with my storage boxes...
-//    lip = .5;
-//    corner_radius = 2.5;
-//    taper = 0.9;
-//    box_height = 47.5;
-
     // Size of a 'small' unit in the storage system.
     unit_length = 54.5 * box_size[0];
     unit_width = 39.5 * box_size[1] ;

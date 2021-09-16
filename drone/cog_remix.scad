@@ -2,7 +2,8 @@ $fn = $preview ? 32 : 180;
 nozzle_diameter = 0.4;
 wall = 0.45; // one line
 twall = 0.87; // two lines
-fwall = 1.7; // four lines
+//fwall = 1.7; // four lines
+fwall = 1.31; // Deliberately undersized to make it lighter.
 
 // Settings for a 0.25mm nozzle.
 //nozzle_diameter = 0.25;
@@ -25,12 +26,13 @@ frame_height = layer_height(3);
 fpv_board = [40, 17, 5];  // with shielding.
 fpv_camera = [8, 8];
 fpv_tilt = 15;
+nacell_rotation = -52.5;
 
 // Battery size by spec. Additional space is added to accomodate some slew,
 // and typical 5mm in the x-axis for lipo connecitons internal to the pack.
 
 // Ares FPV Stock is a 500mAh 853030.
-//battery = [30, 30, 8.5];
+// battery = [30, 30, 8.5];
 // battery = [40, 31.5, 9.5];
 
 // I have replacement 700mAh 802540's.
@@ -38,6 +40,8 @@ fpv_tilt = 15;
 battery = [48, 26.5, 9];
 
 battery_box_zgrow = layers(8) + layer_height(1);
+
+reduce_battery_box_weight = false;
 
 breakaway_supports = true;
 
@@ -61,21 +65,21 @@ if (true) {
             if (battery_bay) translate([0, 0, (battery[2] + battery_box_zgrow) / 2]) {
                 difference() {
                     union() {
-                        outsetcube(battery, [fwall, fwall * 3, battery_box_zgrow], center = true);
+                        outsetcube(battery, [fwall * 2, fwall * 3, battery_box_zgrow], center = true);
                         
                         // 10x5 opening at the back for the battery cable.
                         translate([battery[0] / 2 - fwall, -8, battery[2] / 2 + layers(7)]) difference() {
-                            cube([fwall * 1.5, 10 + (fwall * 3), 5 + layers(4)]);
+                            hull() {
+                                translate([0, -battery[1] / 2 + 8, -layers(1)])
+                                cube([fwall * 1.5, battery[1], layers(1)]);
+                                cube([fwall * 1.5, 10 + (fwall * 3), 5 + layers(4)]);
+                            }
                             translate([-0.1, fwall * 1.5, 0]) cube([fwall * 1.5 + 0.2, 10, 5]);
                         }
                         
                         // Add the arm mounts and arms
                         translate([0, 0, -(battery[2] + battery_box_zgrow) / 2]) {
                             for (my = [0 : 1]) mirror([0, my, 0]) for (mx = [0 : 1]) mirror([mx, 0, 0]) {
-                                translate([6.25 + (3 + 3 * twall) / 2, battery[2] + fwall * 4, 0]) {
-                                    translate([(3 + 3 * twall) * -0.5, 0, 0])
-                                        cube([(3 + 3 * twall), fwall, layer_height(frame_height / 2)]);
-                                }                                
                                 arm();
                             }
                         }
@@ -89,29 +93,19 @@ if (true) {
                         }
                     }
  
-                    // Arm receptactles
-                    translate([0, 0, -(battery[2] + battery_box_zgrow) / 2]) {
-                        for (my = [0 : 1]) mirror([0, my, 0]) for (mx = [0 : 1]) mirror([mx, 0, 0]) {
-                            translate([6.25 + (3 + 3 * twall) / 2, 0, 0]) {
-                                translate([(3 + 3 * twall) * -0.5 - nozzle_diameter / 2, battery[1] / 2, layer_height(frame_height / 2)]) {
-                                        cube([(3 + 3 * twall) + nozzle_diameter, fwall * 1.5 + 1, layer_height(frame_height / 2) + layers(1)]);
-                                        translate([((3 + 3 * twall) + nozzle_diameter) / 2, fwall * 1.5 / 2, layer_height(frame_height / 2) / 2 + layers(3)]) cube([(3 + 3 * twall) + nozzle_diameter, 0.8 + nozzle_diameter, layer_height(frame_height / 2)], center = true);
-                                        translate([((3 + 3 * twall) + nozzle_diameter) / 2, fwall * 1.5 / 2, -layer_height(frame_height / 2) - 2]) screw_opening();
-                                }
-                            }
-                        }
-                    }
-                        
                     // Battery insertion opening
-                    translate([fwall / 2, 0, layers(1) / 2]) resize([battery[0] + fwall, 0, 0]) 
-                        color("pink")
+                    translate([fwall * 3, 0, layers(1) / 2]) 
+                        resize([battery[0] + fwall * 4, 0, 0]) 
+                          color("pink")
                             outsetcube(battery, [0, 0, layers(2)], center = true);
                     
                     // Weight reductions.
                     for (mx = [0, 1]) {
                         mirror([mx, 0, 0]) {
-                            translate([0, 0, frame_height / 2]) cube([8, battery[1] + 10, battery[2] - frame_height], center = true);
-                            translate([18, 0, frame_height / 2]) cube([8, battery[1] + 10, battery[2] - frame_height], center = true);
+                            if (reduce_battery_box_weight) {
+                                translate([0, 0, frame_height / 2]) cube([8, battery[1] + 10, battery[2] - frame_height], center = true);
+                                translate([18, 0, frame_height / 2]) cube([8, battery[1] + 10, battery[2] - frame_height], center = true);
+                            }
                             translate([0, 0, 2]) cube([battery[0] / 4, battery[1], battery[2] + 2], center = true);
                             translate([(battery[0] / 4) + 5, 0, 2]) cube([(battery[0] / 2) - ((battery[0] / 4) / 2 + 8), battery[1], battery[2] + 2], center = true);
                             translate([0, 0, -2]) cube([12, battery[1], battery[2] + 2], center = true);
@@ -120,8 +114,11 @@ if (true) {
                     }
                     
                     // Make enough room to mount the fpv camera in the middle.
-                    for (my = [0, 1]) {
-                        mirror([0, my, 0]) translate([0, battery[1] / 2 / 2 + (fpv_camera[0] / 4) - fwall / 2, 0]) cube([battery[0] + 10, (battery[1] - fpv_camera[0]) / 2 - fwall, battery[2]], center = true);
+                    if (reduce_battery_box_weight) {
+                        for (my = [0, 1]) {
+                            mirror([0, my, 0]) translate([0, battery[1] / 2 / 2 + (fpv_camera[0] / 4) - fwall / 2, 0]) 
+                                cube([battery[0] + 10, (battery[1] - fpv_camera[0]) / 2 - fwall, battery[2]], center = true);
+                        }
                     }
                 }
 
@@ -130,7 +127,7 @@ if (true) {
                     difference() {
                         // support is not 'full height' to allow the top layers to gently sag while bridging.
                         // support is also not positioned directly atop the lower part, so as to be 'floating' when printed.
-                        translate([twall, 0, layers(1) / 2]) cube([battery[0], wall, battery[2]], center = true);
+                        translate([fwall + 0.5, 0, layers(1) / 2]) cube([battery[0] - 0.5, wall, battery[2]], center = true);
                         for(mx = [0, 1])
                             mirror([mx, 0, 0]) 
                                 for (x = [0 : 2])
@@ -230,61 +227,47 @@ module screw_opening() {
 }
 
 module arm() {
-    translate([0, fwall * 3.5, 0]) {
-       if (arms) {
-            difference() {
-                union() {
-                    translate([6.25 + (3 + 3 * twall) / 2, 35 / 2, 0]) {
-                        // Arm from body.
-                        translate([0, 4, frame_height]) wire_guide();
-                        hull() {
-                            translate([(3 + 3 * twall) * -0.5, nozzle_diameter / 2, 0])
-                                 cube([(3 + 3 * twall), (3 + 3 * twall), frame_height]);
-                            translate([0, 21.5, 0]) cylinder(d = 3 + 3 * twall, h = frame_height);
-                        }
+   if (arms) {
+        difference() {
+            union() {
+                hull() {
+                    // Arm from body.
+                    translate([battery[0] / 2 - 3, battery[1] / 2 + fwall - twall, 0])
+                    translate([(3 + 3 * twall) * -0.5, nozzle_diameter / 2, 0])
+                         cube([(3 + 3 * twall), twall, frame_height]);
+                        
+                    // Nacell Connection
+                    height = layer_height(24.5);
+                    translate([6.25 + (3 + 3 * twall) / 2, 35 / 2, 0]) 
+                    translate([0, 21.5, 0])
+                    translate([18, 0, 0]) mirror([0, 1, 0]) 
+                    translate([13, 0, -(height - layer_height(1.5) - 15.5)])
+                    rotate([0, 0, nacell_rotation])
+                    translate([-13 + ((3 + 3 * twall) * - 0.5), (3 + 3 * twall) * - 0.5, height - layer_height(1.5) - 15.5]) 
+                                cube([3 + 3 * twall, 3 + 3 * twall, frame_height]);
 
-                        // Arm to nacell
-                        translate([0, 21.5, frame_height]) rotate([0, 0, -45]) wire_guide();
-                        translate([0, 21.5, 0])  {
-                            union() {
-                                hull() {
-                                    cylinder(d = 3 + 3 * twall, h = frame_height);
-                                    translate([18 - ((3 + 3 * twall) * 1.5), (3 + 3 * twall) * - 0.5, 0])
-                                        cube([3.1 + 3 * twall, 3 + 3 * twall, frame_height]);
-                                }
-                            }
-                        }
-                    }
-                
-                    translate([6.25 + (3 + 3 * twall) / 2, 0 , 0]) {
-                        translate([(3 + 3 * twall) * -0.5, battery[1] / 2, layer_height(frame_height / 2)]) {
-                                cube([(3 + 3 * twall), fwall * 2.5 + nozzle_diameter / 2, layer_height(frame_height / 2)]);
-                                // full height support cubes.
-                                translate([0, 0, -layer_height(frame_height / 2)]) cube([(3 + 3 * twall), wall, frame_height]);
-                                translate([0, fwall * .5 - wall - nozzle_diameter / 2, -layer_height(frame_height / 2)]) cube([(3 + 3 * twall), wall, frame_height]);
-                                translate([0, fwall + nozzle_diameter / 2, -layer_height(frame_height / 2)]) cube([(3 + 3 * twall), wall, frame_height]);
-                                translate([0, fwall * 2 - wall, -layer_height(frame_height / 2)]) cube([(3 + 3 * twall), wall, frame_height]);
-                        }
-                    }
                 }
-                
-                // This is not the correct Z-height, but it works for what we need.
-                translate([0, 0, -(battery[2] + battery_box_zgrow) / 2]) {
-                    for (my = [0 : 1]) mirror([0, my, 0]) for (mx = [0 : 1]) mirror([mx, 0, 0]) {
-                        translate([6.25 + (3 + 3 * twall) / 2, 0, 0]) {
-                            translate([(3 + 3 * twall) * -0.5 - nozzle_diameter / 2, battery[1] / 2,, layer_height(frame_height / 2)]) {
-                                    translate([((3 + 3 * twall) + nozzle_diameter) / 2, fwall * 1.5 / 2, 0]) screw_opening();
-                            }
+            }
+
+            
+
+            
+            // This is not the correct Z-height, but it works for what we need.
+            translate([0, 0, -(battery[2] + battery_box_zgrow) / 2]) {
+                for (my = [0 : 1]) mirror([0, my, 0]) for (mx = [0 : 1]) mirror([mx, 0, 0]) {
+                    translate([6.25 + (3 + 3 * twall) / 2, 0, 0]) {
+                        translate([(3 + 3 * twall) * -0.5 - nozzle_diameter / 2, battery[1] / 2,, layer_height(frame_height / 2)]) {
+                                translate([((3 + 3 * twall) + nozzle_diameter) / 2, fwall * 1.5 / 2, 0]) screw_opening();
                         }
                     }
                 }
             }
         }
-        if (nacells) {
-            translate([6.25 + (3 + 3 * twall) / 2, 35 / 2, 0]) 
-            translate([0, 21.5, 0])
-            translate([18, 0, 0]) mirror([0, 1, 0]) nacell();
-        }
+    }
+    if (nacells) {
+        translate([6.25 + (3 + 3 * twall) / 2, 35 / 2, 0]) 
+        translate([0, 21.5, 0])
+        translate([18, 0, 0]) mirror([0, 1, 0]) nacell();
     }
 }
 
@@ -307,6 +290,7 @@ module wire_guide() {
 module nacell(height = layer_height(24.5)) {
     nacell_od = 10.25;
     translate([13, 0, -(height - layer_height(1.5) - 15.5)])
+    rotate([0, 0, nacell_rotation])
     difference() {
         union() {
             hull() {
@@ -324,6 +308,7 @@ module nacell(height = layer_height(24.5)) {
             
             // Prop Guard Pin Receptacle base
             translate([0, 0, height - layer_height(1.5) - 2.5 -  3.5 - layer_height(0.5)]) {
+                rotate([0, 0, -nacell_rotation]) 
                 hull() {
                     intersection() {
                         union() {
@@ -374,12 +359,14 @@ module nacell(height = layer_height(24.5)) {
         // Brushed Motor & Landing Pad Stack.
         color("grey") {
             // Cutouts for prop guards
+            rotate([0, 0, -nacell_rotation]) 
             rotate([0, 0, 45]) {
                 translate([0, 0, height - layer_height(1.5) - 1.25]) cube([4, nacell_od, 2.5], center = true);
                 rotate([0, 0, 90]) translate([0, 0, height - layer_height(1.5) - 1.25]) cube([4, nacell_od, 2.5], center = true);
             }
 
             // Need 1.6mm holes at the proper spots for mounting the guards.
+            rotate([0, 0, -nacell_rotation]) 
             translate([0, 0, height - layer_height(1.5) - 2.5 -  3.5]) {
                 translate([0, -6.25, 0]) cylinder(d = 1.6 + nozzle_diameter, h = 3.5);
                 translate([6.25, 0, 0]) cylinder(d = 1.6 + nozzle_diameter, h = 3.5);
