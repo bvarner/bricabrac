@@ -108,9 +108,9 @@ top_of_stack = 1; // [1:Yes, 0:No]
 lid = 0; // [1:Yes, 0:No]
 
 // How many subdivisions along the width of the box.
-subdivisions_wide = 2;
+subdivisions_wide = 3;
 // How many subdivisions along the length of the box.
-subdivisions_long = 2;
+subdivisions_long = 3;
 
 
 /* [Bin Geometry] */
@@ -123,6 +123,8 @@ taper = 0.9;
 // Height of the bin.
 box_height = 47.5; // [47.5, 46.15]
 
+/* [Lids] */
+lids = 1; // [1:Yes, 0:No]
 
 /* [Foot Geometry] */
 // Separate the feet from the box? (for easier printing)
@@ -179,6 +181,10 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
 
     top_inside_length = top_length - (wall_thickness * 2);
     top_inside_width = top_width - (wall_thickness * 2);
+    
+    // Lid
+    lid_length = top_lip_length / y_div - (wall_thickness * y_div);
+    lid_width = top_lip_width / x_div - (wall_thickness * x_div);
 
     // Bottom x and y
     bottom_length = top_length - (taper * 2);
@@ -188,8 +194,7 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
     bottom_inside_width = bottom_width - (wall_thickness * 2);
     
     // Flip it right-side up.
-    translate([0, 0, unit_height + foot_height]) rotate([180, 0, 0])
-    
+    translate([0, 0, unit_height + foot_height]) rotate([180, 0, 0]) {
     difference() {
         // Union everything.
         union() {
@@ -222,6 +227,7 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
                             sphere( r = corner_radius);
                     }
                 }
+                
                 // Cut the bottom of the body flush.
                 // (removes minkowski round-over at the 'top' of the bin)
                 translate([-unit_length / 2, -unit_width / 2, -corner_radius * 2]) 
@@ -231,93 +237,9 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
                     cube([unit_length, unit_width, corner_radius * 2]);
                 
                 // Produce a 'positive' to remove from the main cavity. Think of it like a press die.
-                difference() {
-                    // Tapered body main cavity.
-                    minkowski() {
-                        // Hull the top and bottom for a proper taper.
-                        hull() {
-                            // top 
-                            translate([-top_length / 2, -top_width / 2, 0]) cube([top_length, top_width, 1]);
-                            // bottom
-                            translate([-bottom_length / 2, -bottom_width / 2, unit_height - corner_radius - bottom_thickness]) cube([bottom_length, bottom_width, 1]);
-                        }
-                        
-                        // Minkowski a sphere around it.
-                        scale([corner_radius - wall_thickness, corner_radius - wall_thickness, bottom_thickness * 2])
-                            sphere(r = 1);
-                    }
-                    
-                    
-                    // Now that there's a positive shape for being pushed into the tray to form the inside,
-                    // remove any divider walls from the positive.
-                    if (x_div > 1 || y_div > 1) {
-                        difference() {
-                            union() {
-                                if (x_div > 1) {
-                                    for ( xwall = [1 : x_div - 1] ) {
-                                        translate([-top_length / 2 - (wall_thickness / 2) - corner_radius + (xwall * ((top_length + 2 * corner_radius) / x_div)),
-                                                        -top_width / 2 - corner_radius,
-                                                        0])
-                                        if (is_top) {
-                                            cube([wall_thickness, top_width + (2 * corner_radius), unit_height]);
-                                        } else {
-                                            translate([0, 0, foot_height + wall_thickness])
-                                            cube([wall_thickness, top_width + (2 * corner_radius), unit_height]);
-                                        }
-                                    }
-                                }
-                                
-                                if (y_div > 1) {
-                                    for (ywall = [1 : y_div - 1]) {
-                                        translate([-top_inside_length / 2 - corner_radius,
-                                                        -(top_inside_width / 2) - (wall_thickness / 2) - corner_radius + (ywall * ((top_inside_width + 2 * corner_radius) / y_div)),
-                                                        0])
-                                        if (is_top) {
-                                            cube([top_inside_length + (2 * corner_radius), wall_thickness, unit_height]);
-                                        } else {
-                                            translate([0, 0, foot_height + wall_thickness])
-                                            cube([top_inside_length + (2 * corner_radius), wall_thickness, unit_height]);
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            // If we have divider walls, cut reliefs around the outside edge.
-                            translate([-top_inside_length / 2 - corner_radius, -top_inside_width / 2 - corner_radius, 0])
-                                rotate([-90, 0, 0]) 
-                                    cylinder(r = 3.5, h = top_inside_width + 2 * corner_radius);
-                            
-                            translate([top_inside_length / 2 + corner_radius, -top_inside_width / 2 - corner_radius, 0]) 
-                                rotate([-90, 0, 0]) 
-                                    cylinder(r = 3.5, h = top_inside_width + 2 * corner_radius);
-                            
-                            translate([-top_inside_length / 2 - corner_radius, -top_inside_width / 2 - corner_radius, 0]) 
-                                rotate([0, 90, 0]) 
-                                    cylinder(r = 3.5, h = top_inside_length + 2 * corner_radius);
-                            
-                            translate([-top_inside_length / 2 - corner_radius, top_inside_width / 2 + corner_radius, 0]) 
-                                rotate([0, 90, 0]) 
-                                    cylinder(r = 3.5, h = top_inside_length + 2 * corner_radius);
-                        }
-                    }
-                    
-                    // Then we need to remove the corners to block for stacking.
-                    // Set the threshold to 2, so that the upper stack doesn't "rock" back and forth.
-                    if (is_top != true && x_div <= 2 && y_div <= 2) {
-                        for (mx = [0, 1]) {
-                            mirror([mx, 0, 0]) {
-                                for (my = [0, 1]) {
-                                    mirror([0, my, 0]) {
-                                        translate([-top_length / 2 - (wall_thickness / 2) - corner_radius,
-                                                   -top_width / 2 - corner_radius, 0])
-                                            translate([wall_thickness, wall_thickness, foot_height + wall_thickness])
-                                                cylinder(d = wall_thickness * 2 + 2 * corner_radius, h = unit_height);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                inside_positive(top_length, top_width, bottom_length, bottom_width, 
+                                unit_height, corner_radius, bottom_thickness, wall_thickness, x_div, y_div, is_top,
+                                top_inside_length, top_inside_width);
             }
 
             // Add the feet.
@@ -328,15 +250,190 @@ module hf_tray(box_size = [1, 1], subdivisions = [1, 1], wall_thickness = 0.8, l
         }
         
         
-        // If we're doing detached feet, add the holes to the feet for filament joint.
+        // If we're doing detached feet, add the holes for feet.
         if (separate_feet == 1) {
                 foot_holes(bottom_length = bottom_length, bottom_width = bottom_width, unit_height = unit_height, corner_radius = corner_radius, foot_height = foot_height);
                 mirror([1, 0, 0]) foot_holes(bottom_length = bottom_length, bottom_width = bottom_width, unit_height = unit_height, corner_radius = corner_radius, foot_height = foot_height);
                 mirror([0, 1, 0]) foot_holes(bottom_length = bottom_length, bottom_width = bottom_width, unit_height = unit_height, corner_radius = corner_radius, foot_height = foot_height);
                 rotate([0, 0, 180]) foot_holes(bottom_length = bottom_length, bottom_width = bottom_width, unit_height = unit_height, corner_radius = corner_radius, foot_height = foot_height);
         }
+        
+        // Make the cut to receive lids.
+        lids(top_length, top_width, bottom_length, bottom_width, unit_height, corner_radius, bottom_thickness, 
+             wall_thickness, x_div, y_div, is_top, top_inside_length, top_inside_width, top_of_stack, 1);
+    }
+    
+    
+    // Position the lids for printing
+!    translate([top_length + corner_radius * 2, 0, unit_height + 3.5 - bottom_thickness]) mirror([0, 0, 1])
+    lids(top_length, top_width, bottom_length, bottom_width, unit_height, corner_radius, bottom_thickness, 
+         wall_thickness, x_div, y_div, is_top, top_inside_length, top_inside_width, top_of_stack, 0);
+}}
+
+
+module lids(top_length, top_width, bottom_length, bottom_width, unit_height, corner_radius, bottom_thickness, wall_thickness, x_div, y_div, is_top, top_inside_length, top_inside_width, top_of_stack, lid_positive) {
+    if (top_of_stack == 1 && lids == 1) {
+        // Intersect the lid top geometry with the positive die.
+        intersection() {
+            // Move to just below the relief for the top box lid location
+            translate([0, 0, 3.5 - bottom_thickness / 2]) {
+                cube([top_length + 2 * corner_radius, top_width + 2 * corner_radius, bottom_thickness], center = true);
+            }
+            
+            inside_positive(top_length, top_width, bottom_length, bottom_width, 
+                            unit_height, corner_radius, bottom_thickness, wall_thickness, x_div, y_div, is_top,
+                            top_inside_length, top_inside_width, relief_cuts = 0);
+        }
+        // Add the friction tabs to hold the lids in place
+        translate([0, 0, 3.5 - bottom_thickness]) {
+            x = (top_length + corner_radius) / x_div;
+            y = (top_width + corner_radius)/ y_div;
+            
+            if (x_div > 1 && y_div > 1) {
+                for ( ytab = [0 : y_div - 1] ) {
+                    for ( xtab = [0 : x_div - 1] ) {
+                        xtab = 0;
+                        ytab = 0;
+                        translate([-top_inside_length / 2 - corner_radius, -top_inside_width / 2 - corner_radius, 0])
+                        translate([x / 2, y / 2, 0])
+                        translate([xtab * (x + wall_thickness / 2), ytab * (y + wall_thickness / 2), 0])
+                        {
+                            difference() {
+                                translate([0, -wall_thickness / y_div, bottom_thickness / 16]) {
+                                    hull() {
+                                    // Make the tab.
+#                                    cube([x * (2/3),
+                                          y - wall_thickness / 2,
+                                          bottom_thickness / 8], center = true);
+                                    translate([0, 0, bottom_thickness - (bottom_thickness / 8)])
+                                    cube([x * (2/3),
+                                          y + wall_thickness / 3,
+                                          bottom_thickness / 8], center = true);
+                                    }
+                                }
+                                translate([0, 0, bottom_thickness / 2]) {
+                                    cube([((top_length + (2 * corner_radius)) / x_div) * (1/3), 
+                                           ((top_width + (2 * corner_radius)) / y_div) - (wall_thickness * .5) + 2,
+                                           bottom_thickness + 1], center = true);
+                                }
+                            }
+                        
+                            // Add the 'handle' to extract the lids.
+                            if (lid_positive == 0) {
+                                translate([0, (top_inside_width / y_div) / 2 - wall_thickness * 8, 3.5 / 2]) {
+                                    cube([((top_length + (2 * corner_radius)) / x_div) * (1/3), wall_thickness * 4, 3.5], center = true);
+                                   hull() {
+                                        translate([0, 0, 3.5 / 2 - 1.5])
+                                            cube([((top_length + (2 * corner_radius)) / x_div) * (1/3), wall_thickness * 4, 0.25],
+                                                 center = true);
+                                        translate([0, -wall_thickness, 3.5 / 2 - 0.25 / 2])
+                                            cube([((top_length + (2 * corner_radius)) / x_div) * (1/3), wall_thickness * 8, 0.25],
+                                                 center = true);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }    
+}    
+    
+
+// Produce a 'positive' to remove from the main cavity. Think of it like a press die.
+module inside_positive(top_length, top_width, bottom_length, bottom_width, unit_height, corner_radius, bottom_thickness, wall_thickness, x_div, y_div, is_top, top_inside_length, top_inside_width, relief_cuts = 1) {
+    difference() {
+        // Tapered body main cavity.
+        minkowski() {
+            // Hull the top and bottom for a proper taper.
+            hull() {
+                // top 
+                translate([-top_length / 2, -top_width / 2, 0]) cube([top_length, top_width, 1]);
+                // bottom
+                translate([-bottom_length / 2, -bottom_width / 2, unit_height - corner_radius - bottom_thickness]) cube([bottom_length, bottom_width, 1]);
+            }
+            
+            // Minkowski a sphere around it.
+            scale([corner_radius - wall_thickness, corner_radius - wall_thickness, bottom_thickness * 2])
+                sphere(r = 1);
+        }
+        
+        
+        // Now that there's a positive shape for being pushed into the tray to form the inside,
+        // remove any divider walls from the positive.
+        if (x_div > 1 || y_div > 1) {
+            difference() {
+                union() {
+                    if (x_div > 1) {
+                        for ( xwall = [1 : x_div - 1] ) {
+                            translate([-top_length / 2 - corner_radius + (xwall * ((top_length + 2 * corner_radius) / x_div)),
+                                       0,
+                                       unit_height / 2])
+                            if (is_top) {
+                                cube([wall_thickness, top_width + (2 * corner_radius), unit_height], center = true);
+                            } else {
+                                translate([0, 0, foot_height + wall_thickness])
+                                cube([wall_thickness, top_width + (2 * corner_radius), unit_height], center = true);
+                            }
+                        }
+                    }
+                    
+                    if (y_div > 1) {
+                        for (ywall = [1 : y_div - 1]) {
+                            translate([0,
+                                       -top_width / 2 - corner_radius + (ywall * ((top_width + 2 * corner_radius) / y_div)),
+                                            unit_height / 2])
+                            if (is_top) {
+                                cube([top_length + (2 * corner_radius), wall_thickness, unit_height], center = true);
+                            } else {
+                                translate([0, 0, foot_height + wall_thickness])
+                                cube([top_length + (2 * corner_radius), wall_thickness, unit_height], center = true);
+                            }
+                        }
+                    }
+                }
+                
+                if (relief_cuts == 1) {
+                    // Cut reliefs around the outside edge of the divider walls for the container lid to hold the boxes in place.
+                    translate([-top_inside_length / 2 - corner_radius, -top_inside_width / 2 - corner_radius, 0])
+                        rotate([-90, 0, 0]) 
+                            cylinder(r = 3.5, h = top_inside_width + 2 * corner_radius);
+                    
+                    translate([top_inside_length / 2 + corner_radius, -top_inside_width / 2 - corner_radius, 0]) 
+                        rotate([-90, 0, 0]) 
+                            cylinder(r = 3.5, h = top_inside_width + 2 * corner_radius);
+                    
+                    translate([-top_inside_length / 2 - corner_radius, -top_inside_width / 2 - corner_radius, 0]) 
+                        rotate([0, 90, 0]) 
+                            cylinder(r = 3.5, h = top_inside_length + 2 * corner_radius);
+                    
+                    translate([-top_inside_length / 2 - corner_radius, top_inside_width / 2 + corner_radius, 0]) 
+                        rotate([0, 90, 0]) 
+                            cylinder(r = 3.5, h = top_inside_length + 2 * corner_radius);
+                }
+            }
+        }
+        
+        // Then we need to remove the corners to block for stacking.
+        // Set the threshold to 2, so that the upper stack doesn't "rock" back and forth.
+        if (is_top != true && x_div <= 2 && y_div <= 2) {
+            for (mx = [0, 1]) {
+                mirror([mx, 0, 0]) {
+                    for (my = [0, 1]) {
+                        mirror([0, my, 0]) {
+                            translate([-top_length / 2 - (wall_thickness / 2) - corner_radius,
+                                       -top_width / 2 - corner_radius, 0])
+                                translate([wall_thickness, wall_thickness, foot_height + wall_thickness])
+                                    cylinder(d = wall_thickness * 2 + 2 * corner_radius, h = unit_height);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
+
 
 module foot_holes(bottom_length = 0, bottom_width = 0, unit_height = 0, corner_radius = 2.5, foot_height = 2.5) {
     // Box section to receive the foot

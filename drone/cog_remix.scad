@@ -35,7 +35,7 @@ nacell_rotation = -52.5;
 // battery = [30, 30, 8.5];
 // battery = [40, 31.5, 9.5];
 
-// I have replacement 700mAh 802540's.
+// I have replacement 700mAh 's.
 // [40, 25, 8.0] is a bit too tight, so here's my fix.
 battery = [48, 26.5, 9];
 
@@ -44,6 +44,7 @@ battery_box_zgrow = layers(8) + layer_height(1);
 reduce_battery_box_weight = false;
 
 breakaway_supports = true;
+float_support = false;
 
 arms = true;
 nacells = true;
@@ -126,12 +127,13 @@ if (true) {
                 if (breakaway_supports) {
                     difference() {
                         // support is not 'full height' to allow the top layers to gently sag while bridging.
-                        // support is also not positioned directly atop the lower part, so as to be 'floating' when printed.
-                        translate([fwall + 0.5, 0, layers(1) / 2]) cube([battery[0] - 0.5, wall, battery[2]], center = true);
+                        supportz = float_support ? layers(1) / 2 : 0;
+                        supportheight = float_support ? battery[2] : battery[2] + layers(1);
+                        translate([fwall + 0.5, 0, supportz]) cube([battery[0] - 0.5, twall, supportheight], center = true);
                         for(mx = [0, 1])
                             mirror([mx, 0, 0]) 
                                 for (x = [0 : 2])
-                                    translate([x * battery[0] / 6, 0, 0]) cube([battery[0] / 8, twall, battery[2] / 2], center = true);
+                                    translate([x * battery[0] / 6, 0, 0]) cube([battery[0] / 8, twall + 1, battery[2] / 2], center = true);
                     }
                 }
             }
@@ -140,6 +142,7 @@ if (true) {
                 // main board mounts
                 // 1.5mm standoffs & screw receivers
                 // 18.25 oc x axis
+                standoff_height = 2.75;
                 pinloc = [18, 14];
                 for (my = [0 : 1]) {
                     mirror([0, my, 0])
@@ -148,12 +151,12 @@ if (true) {
                             translate([pinloc[0] / 2, pinloc[1] / 2, (battery[2] + battery_box_zgrow - layers(2))]) {
                                 if ((mx == 0 && my == 0) || (mx == 1 && my == 1)) {
                                     difference() {
-                                        cylinder(d = 3, h = layer_height(1.75));
-                                        cylinder(d = 0.85 + nozzle_diameter, h = layer_height(1.75));
+                                        cylinder(d = 3, h = layer_height(standoff_height));
+                                        cylinder(d = 0.85 + nozzle_diameter, h = layer_height(standoff_height));
                                     }
                                 } else {
                                     cylinder(d = 1.5, h = 3.5);
-                                    translate([-1.5, -twall / 2, 0]) cube([3, twall, layer_height(1.75)]);
+                                    translate([-1.5, -twall / 2, 0]) cube([3, twall, layer_height(standoff_height)]);
                                 }
                             }
                     }
@@ -249,9 +252,6 @@ module arm() {
                 }
             }
 
-            
-
-            
             // This is not the correct Z-height, but it works for what we need.
             translate([0, 0, -(battery[2] + battery_box_zgrow) / 2]) {
                 for (my = [0 : 1]) mirror([0, my, 0]) for (mx = [0 : 1]) mirror([mx, 0, 0]) {
@@ -397,7 +397,7 @@ module nacell(height = layer_height(24.5)) {
            rotate([0, 0, 180]) translate([nacell_od / 2 + 3, 0, 5 - layers(5)]) {
                 intersection() {
                     rotate([0, 0, 90]) screw_opening();
-                    cylinder(d = 5, h = 6);
+                    cylinder(d = 5, h = 6.5);
                 }
             }
             

@@ -1,4 +1,4 @@
-nozzle_diameter = 0.25;
+nozzle_diameter = 0.6;
 
 lid_thickness = 3;
 battery_slop = 4; // Space between battery ends and the posts.
@@ -8,7 +8,7 @@ cell_d = 18.25;
 cell_l = 65;
 wrap_thickness = 0.11;
 
-bms_clearance = 4;
+bms_clearance = 5.25;
 pack_height = 2 * cell_d + 2 * wrap_thickness;
 pack_width =  3 * cell_d + 2 * wrap_thickness;
 pack_elevation = 2.5;
@@ -26,7 +26,8 @@ $fn = $preview ? 16 : 90;
 
 part="top";
 
-indicator = "charge_indicator";  
+//indicator = "charge_indicator";
+indicator = "no";
 charge_indicator = (indicator == "charge_indicator") ? true : false;
 
 spring = "wide_spring";
@@ -196,6 +197,7 @@ module bottom() {
             // wall is 1.6mm per side.
             // all positioning was based on the 7.5mm width.
             // So we need to offset by (spring_width - 7.5) / 2
+            color("pink")
             xsymmetric() {
                 translate([31.875 - 3, -1 - ((spring_width - 7.5) / 2), -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
                     difference() {
@@ -263,10 +265,13 @@ module bottom() {
             }
             
             // pack elevation (bottom air flow) and reinforcement(sides)
-            for (py = [0: 15 : cell_l - 15]) {
+            for (py = [-4: 17 : cell_l - 15]) {
+                echo("py:", py);
+                if (py != -4 + 17) {
                 translate([-40, -11.15 + py, -2.7 -lid_thickness - bms_clearance - pack_height - pack_elevation]) {
-                    cube([80, 1.29, py == 15 ? pack_elevation : pack_elevation + pack_height + bms_clearance]);
+                    cube([80, nozzle_diameter * 8, py == 15 ? pack_elevation : pack_elevation + pack_height + bms_clearance]);
                 }
+            }
             }
             // lengthwise reinforcements
             xsymmetric() {
@@ -434,9 +439,9 @@ module top() {
             minkowski() {
                 union() {
                     translate([0, -(34 - 28.4) / 2, -2]) 
-                        cylinder(d1 = 30  - 2 * r, d2 = 28.4 - 2 * r, h = 46.2 - r);
+                        cylinder(d1 = 30 - nozzle_diameter - 2 * r, d2 = 28.4 - 2 * r, h = 46.2 - r);
                     intersection() {
-                        cylinder(d1 = 35.75 - 2 * r, d2 = 34 - 2 * r, h = 44.2 - r);
+                        cylinder(d1 = 35.75 - nozzle_diameter - 2 * r, d2 = 34 - 2 * r, h = 44.2 - r);
                         hull() {
                             translate([-22.75 / 2 + r , 0, 0]) cube([22.75 - 2 * r, 35.5, 0.1]);
                             translate([-21 / 2 + r, 0, 44.2 - 0.1 - r]) cube([21 - 2 * r, 35.5, 0.1]);
@@ -590,14 +595,14 @@ module top() {
     }
     
     // latch cutout supports (for printing)
-    translate([0, 2.5, 0]) {
-        xsymmetric() {
-            for (y = [0 : 4 : 25]) {
-                translate([-35.55, -12.18 + 2 +y, -2.75 - lid_thickness])
-                    cube([4.75 + .5, nozzle_diameter, lid_thickness]);
-            }
-        }
-    }
+//    translate([0, 2.5, 0]) {
+//        xsymmetric() {
+//            for (y = [0 : 4 : 25]) {
+//                translate([-35.55, -12.18 + 2 +y, -2.75 - lid_thickness])
+//                    cube([4.75 + .5, nozzle_diameter, lid_thickness]);
+//            }
+//        }
+//    }
 }
 
 
